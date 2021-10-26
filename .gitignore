@@ -1,0 +1,14 @@
+polaris/
+log/
+
+.idea/
+
+vendor/*
+
+nohup.out
+
+polaris-sidecar
+
+test/cover.out
+test/index.html
+deploy/test.sh
