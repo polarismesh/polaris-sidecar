@@ -91,9 +91,9 @@ func startTimingReloadDnsCache(conf *conf.DnsConfig, h *dnsServer.LocalDNSServer
 				fmt.Printf("error to get services, err %v \n", err)
 				continue
 			}
+			sort.Strings(services)
 			if ifServiceListChanged(services) {
 				h.UpdateLookupTable(services, conf.DNSAnswerIp)
-				sort.Strings(currentServices)
 				currentServices = services
 			}
 		}
@@ -101,7 +101,6 @@ func startTimingReloadDnsCache(conf *conf.DnsConfig, h *dnsServer.LocalDNSServer
 }
 
 func ifServiceListChanged(newNsServices []string) bool {
-	sort.Strings(newNsServices)
 	if reflect.DeepEqual(currentServices, newNsServices) {
 		return false
 	}
