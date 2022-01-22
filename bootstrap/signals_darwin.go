@@ -1,5 +1,5 @@
 /**
- * Tencent is pleased to support the open source community by making CL5 available.
+ * Tencent is pleased to support the open source community by making Polaris available.
  *
  * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
  *
@@ -15,14 +15,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package main
+package bootstrap
 
 import (
-	"github.com/polarismesh/polaris-sidecar/cmd"
-	_ "github.com/polarismesh/polaris-sidecar/resolver/discovery"
+	"os"
+	"syscall"
 )
 
-// main entry
-func main() {
-	cmd.Execute()
+var signals = []os.Signal{
+	syscall.SIGINT, syscall.SIGTERM,
+	syscall.SIGSEGV, syscall.SIGUSR1,
 }

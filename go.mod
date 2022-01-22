@@ -1,15 +1,13 @@
-module git.code.oa.com/polaris/polaris-sidecar
+module github.com/polarismesh/polaris-sidecar
 
 require (
-	git.code.oa.com/polaris/polaris-go v0.5.2
-	github.com/golang/protobuf v1.4.2
-	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/miekg/dns v1.1.43
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
-	google.golang.org/grpc v1.27.0
-	google.golang.org/protobuf v1.23.0 // indirect
-	gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	github.com/hashicorp/go-multierror v1.1.1
+	github.com/miekg/dns v1.1.45
+	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/polarismesh/polaris-go v1.0.1
+	github.com/spf13/cobra v1.3.0
+	go.uber.org/zap v1.19.1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 go 1.13

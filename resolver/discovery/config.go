@@ -15,31 +15,28 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package version
+package discovery
 
-var (
-	// Version version
-	Version string
-	// BuildDate build date
-	BuildDate string
+import (
+	"encoding/json"
+	"fmt"
 )
 
-/**
- * Get 获取版本号
- */
-func Get() string {
-	if Version == "" {
-		return "v0.1.0"
-	}
-
-	return Version
+type resolverConfig struct {
+	RouteLabels map[string]string `json:"route_labels"`
 }
 
-// GetRevision 获取完整版本号信息，包括时间戳的
-func GetRevision() string {
-	if Version == "" || BuildDate == "" {
-		return "v0.1.0"
+func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
+	config := &resolverConfig{}
+	if len(options) == 0 {
+		return config, nil
 	}
-
-	return Version + "." + BuildDate
+	jsonBytes, err := json.Marshal(options)
+	if nil != err {
+		return nil, fmt.Errorf("fail to marshal %s config entry, err is %v", name, err)
+	}
+	if err = json.Unmarshal(jsonBytes, config); nil != err {
+		return nil, fmt.Errorf("fail to unmarshal %s config entry, err is %v", name, err)
+	}
+	return config, nil
 }
