@@ -19,12 +19,14 @@ package mesh
 
 import (
 	"context"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/resolver"
-	"github.com/miekg/dns"
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/miekg/dns"
+
+	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
 const name = "mesh"

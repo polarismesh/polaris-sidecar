@@ -19,11 +19,13 @@ package mesh
 
 import (
 	"context"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/miekg/dns"
 	"net"
 	"strings"
 	"sync/atomic"
+
+	"github.com/miekg/dns"
+
+	"github.com/polarismesh/polaris-sidecar/log"
 )
 
 type LocalDNSServer struct {

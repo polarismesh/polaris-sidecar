@@ -19,11 +19,12 @@ package mesh
 
 import (
 	"encoding/json"
-	"github.com/polarismesh/polaris-sidecar/log"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/polarismesh/polaris-sidecar/log"
 )
 
 type clusterConfig struct {

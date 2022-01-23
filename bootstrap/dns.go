@@ -19,12 +19,14 @@ package bootstrap
 
 import (
 	"context"
-	"github.com/miekg/dns"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/resolver"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/miekg/dns"
+
+	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
 type dnsHandler struct {

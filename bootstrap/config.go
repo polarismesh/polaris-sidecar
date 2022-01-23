@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/resolver"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+
+	"gopkg.in/yaml.v2"
+
+	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
 // SidecarConfig global sidecar config struct

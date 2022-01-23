@@ -19,13 +19,15 @@ package discovery
 
 import (
 	"context"
+	"net"
+	"strings"
+
 	"github.com/miekg/dns"
 	"github.com/polarismesh/polaris-go/api"
 	"github.com/polarismesh/polaris-go/pkg/model"
+
 	"github.com/polarismesh/polaris-sidecar/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
-	"net"
-	"strings"
 )
 
 const name = "discovery"

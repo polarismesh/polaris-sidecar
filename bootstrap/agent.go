@@ -20,13 +20,15 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"github.com/miekg/dns"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/resolver"
 	"os"
 	"os/signal"
 	"strconv"
 	"time"
+
+	"github.com/miekg/dns"
+
+	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
 // Agent provide the listener to dns server

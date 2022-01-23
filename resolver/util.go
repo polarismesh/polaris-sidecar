@@ -19,8 +19,9 @@ package resolver
 
 import (
 	"fmt"
-	"github.com/polarismesh/polaris-go/pkg/model"
 	"strings"
+
+	"github.com/polarismesh/polaris-go/pkg/model"
 )
 
 const Quota = "."

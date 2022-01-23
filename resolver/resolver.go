@@ -19,6 +19,7 @@ package resolver
 
 import (
 	"context"
+
 	"github.com/miekg/dns"
 )
 
