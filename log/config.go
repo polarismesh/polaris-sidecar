@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
