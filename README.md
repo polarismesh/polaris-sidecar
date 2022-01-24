@@ -73,4 +73,61 @@ testsvc.default.polaris. 0      IN      AAAA    ::ffff:19.22.31.51
 
 ### 容器环境下安装
 
+容器环境下，polaris-sidecar容器与业务容器是在同一个pod中运行的，可以通过手动注入或者自动注入的方式进行polaris-sidecar的安装。
 
+#### 手动注入
+
+下面流程会介绍如何通过手动注入的方式，将polaris-sidecar注入到业务容器中。
+
+polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网络可以访问dockerhub公有镜像仓库。
+
+1. 从[Releases](https://github.com/polarismesh/polaris-sidecar/releases)下载最新版本的源码包，解压并进入解压后的源码目录。
+2. 添加configmap：polaris-sidecar-config。
+```
+kubectl apply -f deploy/configmap/polaris-sidecar-config.yaml
+```
+3. 修改deploy/configmap/polaris-client-config.yaml，写入北极星服务端的地址，端口号使用8091（GRPC端口）。
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polaris-client-config
+data:
+  polaris.yaml: |-
+    global:
+      serverConnector:
+        addresses:
+          - 127.0.0.1:8091
+```
+4. 添加configmap：polaris-client-config。
+```
+kubectl apply -f deploy/configmap/polaris-client-config.yaml
+```
+5. 在应用的上部署spec中添加polaris-sidecar容器的部署脚本，相关添加位置如下：
+```
+#在containers下，添加polaris-sidecar的镜像部署配置
+containers:
+  - image: polarismesh/polaris-sidecar:v1.0.0
+    imagePullPolicy: Always
+    name: polaris-sidecar
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+      - mountPath: /root/polaris-sidecar.yaml
+        name: polaris-sidecar-config
+        subPath: polaris-sidecar.yaml
+      - mountPath: /root/polaris.yaml
+        name: polaris-client-config
+        subPath: polaris.yaml  
+#在volumes下，添加polaris-sidecar-config和polaris-client-config的挂载配置
+volumes:
+  - configMap:
+      defaultMode: 420
+      name: polaris-sidecar-config
+    name: polaris-sidecar-config
+  - configMap:
+      defaultMode: 420
+      name: polaris-client-config
+    name: polaris-client-config
+```
+添加后的部署配置最终效果可以参考deploy/spec/sidecar-dns-example.yaml。
