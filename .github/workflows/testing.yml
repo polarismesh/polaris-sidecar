@@ -27,10 +27,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      # Execute vert check
-      - name: Vert check
-        run: bash .github/vert.sh -install && bash .github/vert.sh
-
       # Compile
       - name: Build server
         run: bash build.sh
