@@ -1,5 +1,5 @@
 /**
- * Tencent is pleased to support the open source community by making CL5 available.
+ * Tencent is pleased to support the open source community by making Polaris available.
  *
  * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
  *
@@ -15,14 +15,31 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package main
+package cmd
 
 import (
-	"github.com/polarismesh/polaris-sidecar/cmd"
-	_ "github.com/polarismesh/polaris-sidecar/resolver/discovery"
+	"github.com/spf13/cobra"
+
+	"github.com/polarismesh/polaris-sidecar/bootstrap"
 )
 
-// main entry
-func main() {
-	cmd.Execute()
+var (
+	configFilePath = ""
+
+	startCmd = &cobra.Command{
+		Use:   "start",
+		Short: "start running",
+		Long:  "start running",
+		Run: func(c *cobra.Command, args []string) {
+			bootstrap.Start(configFilePath)
+		},
+	}
+)
+
+/**
+ * @brief 解析命令参数
+ */
+func init() {
+	startCmd.PersistentFlags().StringVarP(
+		&configFilePath, "config", "c", "polaris-sidecar.yaml", "config file path")
 }

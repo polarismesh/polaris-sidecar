@@ -15,15 +15,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package dnsServer
+package mesh
 
 import (
 	"encoding/json"
-	"git.code.oa.com/polaris/polaris-go/pkg/log"
-	"git.code.oa.com/polaris/polaris-sidecar/conf"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/polarismesh/polaris-sidecar/log"
 )
 
 type clusterConfig struct {
@@ -42,16 +43,15 @@ type registry interface {
 	GetCurrentNsService() ([]string, error)
 }
 
-func NewRegistry(conf *conf.DnsConfig) (registry, error) {
+func newRegistry(conf *resolverConfig) (registry, error) {
 	r := &envoyRegistry{
 		conf: conf,
 	}
-
 	return r, nil
 }
 
 type envoyRegistry struct {
-	conf *conf.DnsConfig
+	conf *resolverConfig
 }
 
 func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
@@ -63,10 +63,10 @@ func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
 	var services []string
 	configDump := &clusterConfig{}
 
-	reqUrl := "http://" + r.conf.SidecarAddr + ":" + r.conf.SidecarAdminPort + "/config_dump"
+	reqUrl := "http://" + r.conf.RegistryHost + ":" + strconv.Itoa(r.conf.RegistryPort) + "/config_dump"
 
 	if req, err = http.NewRequest(http.MethodGet, reqUrl, nil); err != nil {
-		log.GetBaseLogger().Errorf("Failed to construct request, %v", err)
+		log.Errorf("[Mesh] failed to construct request, %v", err)
 		return nil, err
 	}
 
@@ -80,17 +80,17 @@ func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
 	}
 
 	if resp, err = httpClient.Do(req); err != nil {
-		log.GetBaseLogger().Errorf("Fail to request envoy sidecar, %v", err)
+		log.Errorf("[Mesh] fail to request envoy sidecar, %v", err)
 		return nil, err
 	}
 
 	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		log.GetBaseLogger().Errorf("Fail to read response, %v", err)
+		log.Errorf("[Mesh] fail to read response, %v", err)
 		return nil, err
 	}
 
 	if err = json.Unmarshal(body, configDump); err != nil {
-		log.GetBaseLogger().Errorf("Fail to unmarshal envoy response, %v", err)
+		log.Errorf("[Mesh] fail to unmarshal envoy response, %v", err)
 		return nil, err
 	}
 

@@ -1,0 +1,25 @@
+port: 53
+logger:
+  output_paths:
+    - stdout
+  error_output_paths:
+    - stderr
+  rotate_output_path: log/polaris-sidecar.log
+  error_rotate_output_path: log/polaris-sidecar-error.log
+  rotation_max_size: 100
+  rotation_max_backups: 10
+  rotation_max_age: 7
+  output_level: info
+resolvers:
+  - name: discovery
+    dns_ttl: 0
+    enable: true
+    suffix: polaris
+  - name: mesh
+    dns_ttl: 120
+    enable: false
+    option:
+      registry_host: 127.0.0.1
+      registry_port: 15000
+      reload_interval_sec: 2
+      dns_answer_ip: 10.4.4.4
