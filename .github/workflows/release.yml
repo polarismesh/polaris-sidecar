@@ -24,6 +24,10 @@ jobs:
         with:
           go-version: 1.16.5
 
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -34,8 +38,10 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
-          bash build.sh
+          echo "version is $VERSION"
+          bash build.sh $VERSION
           PACKAGE_NAME=$(ls | grep polaris-sidecar-release*.zip | sed -n '1p')
           echo ::set-output name=name::${PACKAGE_NAME}
 
