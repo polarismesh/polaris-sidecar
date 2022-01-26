@@ -82,13 +82,13 @@ func defaultSidecarConfig() *SidecarConfig {
 			{
 				Name:   resolver.PluginNameDnsAgent,
 				DnsTtl: 10,
-				Enable: true,
+				Enable: false,
 				Suffix: defaultSvcSuffix,
 			},
 			{
 				Name:   resolver.PluginNameMeshProxy,
 				DnsTtl: 120,
-				Enable: false,
+				Enable: true,
 				Option: map[string]interface{}{
 					"registry_host":       "127.0.0.1",
 					"registry_port":       15000,
