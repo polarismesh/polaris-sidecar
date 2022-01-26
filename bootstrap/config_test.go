@@ -15,31 +15,16 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package mesh
+package bootstrap
 
 import (
-	"encoding/json"
 	"fmt"
+	"testing"
 )
 
-type resolverConfig struct {
-	RegistryHost      string `json:"registry_host"`
-	RegistryPort      int    `json:"registry_port"`
-	ReloadIntervalSec int    `yaml:"reload_interval_sec"`
-	DNSAnswerIp       string `yaml:"dns_answer_ip"`
-}
-
-func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
-	config := &resolverConfig{}
-	if len(options) == 0 {
-		return config, nil
-	}
-	jsonBytes, err := json.Marshal(options)
-	if nil != err {
-		return nil, fmt.Errorf("fail to marshal %s config entry, err is %v", name, err)
-	}
-	if err = json.Unmarshal(jsonBytes, config); nil != err {
-		return nil, fmt.Errorf("fail to unmarshal %s config entry, err is %v", name, err)
-	}
-	return config, nil
+func TestParseLabels(t *testing.T) {
+	labels := "xx:yy,xx1:yy1,xx2:yy2"
+	var values map[string]string
+	values = parseLabels(labels)
+	fmt.Printf("values are %v\n", values)
 }

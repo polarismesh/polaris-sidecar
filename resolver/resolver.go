@@ -23,7 +23,12 @@ import (
 	"github.com/miekg/dns"
 )
 
-const CtxKeyProtocol = "protocol"
+const (
+	// PluginNameDnsAgent dns-agent plugin identity
+	PluginNameDnsAgent = "dnsagent"
+	// PluginNameMeshProxy mesh-proxy plugin identity
+	PluginNameMeshProxy = "meshproxy"
+)
 
 // ConfigEntry: resolver plugin config entry
 type ConfigEntry struct {

@@ -35,6 +35,7 @@ type dnsHandler struct {
 	searchNames     []string
 	recursorTimeout time.Duration
 	recursors       []string
+	recurseEnable   bool
 }
 
 func (d *dnsHandler) preprocess(qname string) string {
@@ -82,7 +83,6 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// questions length is 0, send refused
 	if len(req.Question) == 0 {
 		d.sendDnsCode(w, req, dns.RcodeRefused)
-		return
 	}
 	// questions type we only accept
 	question := req.Question[0]
@@ -107,44 +107,45 @@ func (d *dnsHandler) handleRecurse(resp dns.ResponseWriter, req *dns.Msg) {
 	defer func(s time.Time) {
 		log.Debugf("[agent] request served from client, "+
 			"question: %s, network: %s, latency: %s, client: %s, client_network: %s",
-			q, network, time.Since(s).String(), resp.RemoteAddr().String(), resp.RemoteAddr().Network())
+			q.String(), network, time.Since(s).String(), resp.RemoteAddr().String(), resp.RemoteAddr().Network())
 	}(time.Now())
 
 	// Switch to TCP if the client is
 	if _, ok := resp.RemoteAddr().(*net.TCPAddr); ok {
 		network = "tcp"
 	}
-
-	// Recursively resolve
-	c := &dns.Client{Net: network, Timeout: d.recursorTimeout}
-	var r *dns.Msg
-	var rtt time.Duration
-	var err error
-	for _, recursor := range d.recursors {
-		r, rtt, err = c.Exchange(req, recursor)
-		// Check if the response is valid and has the desired Response code
-		if r != nil && (r.Rcode != dns.RcodeSuccess && r.Rcode != dns.RcodeNameError) {
-			log.Debugf("[agent] recurse failed for question, question: %s, rtt: %s, recursor: %s, rcode: %s",
-				q, rtt, recursor, dns.RcodeToString[r.Rcode])
-			// If we still have recursors to forward the query to,
-			// we move forward onto the next one else the loop ends
-			continue
-		} else if err == nil || (r != nil && r.Truncated) {
-			// Forward the response
-			log.Debugf("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s, rcode: %s",
-				q, rtt, recursor)
-			if err := resp.WriteMsg(r); err != nil {
-				log.Warnf("failed to respond, error: %v", err)
+	if d.recurseEnable {
+		// Recursively resolve
+		c := &dns.Client{Net: network, Timeout: d.recursorTimeout}
+		var r *dns.Msg
+		var rtt time.Duration
+		var err error
+		for _, recursor := range d.recursors {
+			r, rtt, err = c.Exchange(req, recursor)
+			// Check if the response is valid and has the desired Response code
+			if r != nil && (r.Rcode != dns.RcodeSuccess && r.Rcode != dns.RcodeNameError) {
+				log.Debugf("[agent] recurse failed for question, question: %s, rtt: %s, recursor: %s, rcode: %s",
+					q.String(), rtt, recursor, dns.RcodeToString[r.Rcode])
+				// If we still have recursors to forward the query to,
+				// we move forward onto the next one else the loop ends
+				continue
+			} else if err == nil || (r != nil && r.Truncated) {
+				// Forward the response
+				log.Debugf("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s",
+					q.String(), rtt, recursor)
+				if err := resp.WriteMsg(r); err != nil {
+					log.Warnf("failed to respond, error: %v", err)
+				}
+				return
 			}
-			return
+			log.Errorf("[agent] recurse failed, error: %v", err)
 		}
-		log.Errorf("[agent] recurse failed, error: %v", err)
-	}
 
-	// If all resolvers fail, return a SERVFAIL message
-	log.Errorf("[agent] all resolvers failed for question from client, "+
-		"question: %s, client: %s, client_network: %s",
-		q, resp.RemoteAddr().String(), resp.RemoteAddr().Network())
+		// If all resolvers fail, return a SERVFAIL message
+		log.Errorf(
+			"[agent] all resolvers failed for question from client, question: %s, client: %s, client_network: %s",
+			q.String(), resp.RemoteAddr().String(), resp.RemoteAddr().Network())
+	}
 	d.sendDnsCode(resp, req, dns.RcodeServerFailure)
 }
 

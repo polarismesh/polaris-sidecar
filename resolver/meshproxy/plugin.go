@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package mesh
+package meshproxy
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
-const name = "mesh"
+const name = resolver.PluginNameMeshProxy
 
 type resolverMesh struct {
 	localDNSServer *LocalDNSServer

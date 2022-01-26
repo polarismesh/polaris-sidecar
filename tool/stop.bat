@@ -15,7 +15,7 @@ rem specific language governing permissions and limitations under the License.
 
 setlocal
 
-set "SERVER_NAME=polaris-server.exe"
+set "SERVER_NAME=polaris-sidecar.exe"
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist ^| findstr "%SERVER_NAME%"') do (
     echo "process is %%b"

@@ -40,8 +40,8 @@ type Agent struct {
 }
 
 // Start the main agent routines
-func Start(configFile string) {
-	agent, err := newAgent(configFile)
+func Start(configFile string, bootConfig *BootConfig) {
+	agent, err := newAgent(configFile, bootConfig)
 	if err != nil {
 		fmt.Printf("[ERROR] loadConfig fail: %v\n", err)
 		os.Exit(-1)
@@ -75,44 +75,47 @@ func runMainLoop(cancel context.CancelFunc, errCh chan error) {
 	}
 }
 
-func parseResolvConf() ([]string, []string, error) {
-	dnsConfig, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+const (
+	etcResolvConfPath = "/etc/resolv.conf"
+)
+
+func parseResolvConf(bindLocalhost bool) ([]string, []string) {
+	if !isFile(etcResolvConfPath) {
+		return nil, nil
+	}
+	dnsConfig, err := dns.ClientConfigFromFile(etcResolvConfPath)
 	if err != nil {
 		log.Errorf("[agent] failed to load /etc/resolv.conf: %v", err)
-		return nil, nil, err
+		return nil, nil
 	}
 	var searchNames []string
 	var nameservers []string
 	if dnsConfig != nil {
 		searchNames = dnsConfig.Search
 		for _, server := range dnsConfig.Servers {
-			if server == "127.0.0.1" {
+			if server == "127.0.0.1" && bindLocalhost {
 				continue
 			}
 			nameservers = append(nameservers, server)
 		}
 	}
-	return nameservers, searchNames, nil
+	return nameservers, searchNames
 }
 
-func newAgent(configFile string) (*Agent, error) {
+func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 	var err error
 	polarisAgent := &Agent{}
-	nameservers, searchNames, err := parseResolvConf()
-	if nil != err {
-		log.Errorf("[agent] fail to parse /etc/resolv.conf, err: %v", err)
-		return nil, err
-	}
-	log.Infof("[agent] success to parse /etc/resolv.conf, nameservers %s, search %s", nameservers, searchNames)
-	polarisAgent.config, err = parseYamlConfig(configFile)
+	polarisAgent.config, err = parseYamlConfig(configFile, bootConfig)
 	if nil != err {
 		log.Errorf("[agent] fail to parse sidecar config, err: %v", err)
 		return nil, err
 	}
+	nameservers, searchNames := parseResolvConf(polarisAgent.config.bindLocalhost())
+	log.Infof("[agent] finished to parse /etc/resolv.conf, nameservers %s, search %s", nameservers, searchNames)
 	if len(polarisAgent.config.Recurse.NameServers) == 0 {
 		polarisAgent.config.Recurse.NameServers = nameservers
 	}
-	log.Infof("[agent] success to parse sidecar config, current active config is %s", *polarisAgent.config)
+	log.Infof("[agent] finished to parse sidecar config, current active config is %s", *polarisAgent.config)
 	// 初始化日志打印
 	err = log.Configure(polarisAgent.config.Logger)
 	log.Infof("[agent] success to init log config")
@@ -138,28 +141,32 @@ func newAgent(configFile string) (*Agent, error) {
 			log.Errorf("[agent] fail to init resolver %s, err: %v", resolverCfg.Name, err)
 			return nil, err
 		}
-		log.Infof("[agent] success to init resolver %s", resolverCfg.Name)
+		log.Infof("[agent] finished to init resolver %s", resolverCfg.Name)
 		polarisAgent.resolvers = append(polarisAgent.resolvers, handler)
 	}
 	recurseAddresses := make([]string, 0, len(polarisAgent.config.Recurse.NameServers))
 	for _, nameserver := range polarisAgent.config.Recurse.NameServers {
 		recurseAddresses = append(recurseAddresses, fmt.Sprintf("%s:53", nameserver))
 	}
-	polarisAgent.udpServer = &dns.Server{Addr: "127.0.0.1:" + strconv.Itoa(polarisAgent.config.Port), Net: "udp"}
+	polarisAgent.udpServer = &dns.Server{
+		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "udp"}
 	polarisAgent.udpServer.Handler = &dnsHandler{
 		protocol:        "udp",
 		resolvers:       polarisAgent.resolvers,
 		searchNames:     searchNames,
 		recursorTimeout: time.Duration(polarisAgent.config.Recurse.TimeoutSec) * time.Second,
 		recursors:       recurseAddresses,
+		recurseEnable:   polarisAgent.config.Recurse.Enable,
 	}
-	polarisAgent.tcpServer = &dns.Server{Addr: "127.0.0.1:" + strconv.Itoa(polarisAgent.config.Port), Net: "tcp"}
+	polarisAgent.tcpServer = &dns.Server{
+		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "tcp"}
 	polarisAgent.tcpServer.Handler = &dnsHandler{
 		protocol:        "tcp",
 		resolvers:       polarisAgent.resolvers,
 		searchNames:     searchNames,
 		recursorTimeout: time.Duration(polarisAgent.config.Recurse.TimeoutSec) * time.Second,
 		recursors:       recurseAddresses,
+		recurseEnable:   polarisAgent.config.Recurse.Enable,
 	}
 	return polarisAgent, nil
 }

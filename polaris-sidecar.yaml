@@ -1,4 +1,8 @@
+bind: 0.0.0.0
 port: 53
+recurse:
+  enable: false
+  timeoutSec: 1
 logger:
   output_paths:
     - stdout
@@ -11,11 +15,11 @@ logger:
   rotation_max_age: 7
   output_level: info
 resolvers:
-  - name: discovery
-    dns_ttl: 0
+  - name: dnsagent
+    dns_ttl: 10
     enable: true
-    suffix: polaris
-  - name: mesh
+    suffix: svc.polaris
+  - name: meshproxy
     dns_ttl: 120
     enable: false
     option:

@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package discovery
+package dnsagent
 
 import (
 	"context"
@@ -30,7 +30,7 @@ import (
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
-const name = "discovery"
+const name = resolver.PluginNameDnsAgent
 
 type resolverDiscovery struct {
 	consumer api.ConsumerAPI
@@ -100,35 +100,42 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 	if nil == svcKey {
 		return nil
 	}
-	request := &api.GetOneInstanceRequest{}
+	request := &api.GetInstancesRequest{}
 	request.Namespace = svcKey.Namespace
 	request.Service = svcKey.Service
 	if len(r.config.RouteLabels) > 0 {
 		request.SourceService = &model.ServiceInfo{Metadata: r.config.RouteLabels}
 	}
-	resp, err := r.consumer.GetOneInstance(request)
+	resp, err := r.consumer.GetInstances(request)
 	if nil != err {
 		log.Errorf("[discovery] fail to lookup service %s, err: %v", *svcKey, err)
 		return nil
 	}
-	instance := resp.GetInstance()
-	address := net.ParseIP(instance.GetHost())
 
-	var rr dns.RR
-	if question.Qtype != dns.TypeA {
-		rr = &dns.A{
-			Hdr: dns.RR_Header{Name: qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-			A:   address,
-		}
-	} else {
-		rr = &dns.AAAA{
-			Hdr:  dns.RR_Header{Name: qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-			AAAA: address,
-		}
-	}
 	msg := &dns.Msg{}
+	instances := resp.GetInstances()
+	//do reorder and unique
+	hosts := make(map[string]bool, len(instances))
+	for _, instance := range instances {
+		hosts[instance.GetHost()] = true
+	}
+	for host := range hosts {
+		address := net.ParseIP(host)
+		var rr dns.RR
+		if question.Qtype != dns.TypeA {
+			rr = &dns.A{
+				Hdr: dns.RR_Header{Name: qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+				A:   address,
+			}
+		} else {
+			rr = &dns.AAAA{
+				Hdr:  dns.RR_Header{Name: qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+				AAAA: address,
+			}
+		}
+		msg.Answer = append(msg.Answer, rr)
+	}
 	msg.Authoritative = true
-	msg.Answer = append(msg.Answer, rr)
 	msg.Rcode = dns.RcodeSuccess
 	return msg
 }

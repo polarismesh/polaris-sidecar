@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package discovery
+package meshproxy
 
 import (
 	"encoding/json"
@@ -23,7 +23,10 @@ import (
 )
 
 type resolverConfig struct {
-	RouteLabels map[string]string `json:"route_labels"`
+	RegistryHost      string `json:"registry_host"`
+	RegistryPort      int    `json:"registry_port"`
+	ReloadIntervalSec int    `yaml:"reload_interval_sec"`
+	DNSAnswerIp       string `yaml:"dns_answer_ip"`
 }
 
 func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
