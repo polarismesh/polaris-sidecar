@@ -26,12 +26,14 @@ import (
 var (
 	configFilePath = ""
 
+	bootConfig bootstrap.BootConfig
+
 	startCmd = &cobra.Command{
 		Use:   "start",
 		Short: "start running",
 		Long:  "start running",
 		Run: func(c *cobra.Command, args []string) {
-			bootstrap.Start(configFilePath)
+			bootstrap.Start(configFilePath, &bootConfig)
 		},
 	}
 )
@@ -41,5 +43,19 @@ var (
  */
 func init() {
 	startCmd.PersistentFlags().StringVarP(
-		&configFilePath, "config", "c", "polaris-sidecar.yaml", "config file path")
+		&configFilePath, "config-file", "c", "polaris-sidecar.yaml", "config file path")
+	startCmd.PersistentFlags().StringVarP(
+		&bootConfig.Bind, "bind", "b", "", "polaris sidecar bind host")
+	startCmd.PersistentFlags().IntVarP(
+		&bootConfig.Port, "port", "p", 0, "polaris sidecar listen port")
+	startCmd.PersistentFlags().StringVar(
+		&bootConfig.LogLevel, "log-level", "", "polaris sidecar logger level")
+	startCmd.PersistentFlags().StringVar(&bootConfig.RecurseEnabled,
+		"recurse-enabled", "", "polaris sidecar recurse enabled")
+	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverDnsAgentEnabled,
+		"resolver-dnsagent-enabled", "", "polaris sidecar resolver dnsagent enabled")
+	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverDnsAgentRouteLabels,
+		"resolver-dnsagent-route-labels", "", "polaris sidecar resolver dnsagent route lables")
+	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverMeshProxyEnabled,
+		"meshproxy-enabled", "", "polaris sidecar resolver dnsagent enabled")
 }

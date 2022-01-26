@@ -19,7 +19,7 @@ package main
 
 import (
 	"github.com/polarismesh/polaris-sidecar/cmd"
-	_ "github.com/polarismesh/polaris-sidecar/resolver/discovery"
+	_ "github.com/polarismesh/polaris-sidecar/resolver/dnsagent"
 )
 
 // main entry

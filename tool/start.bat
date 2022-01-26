@@ -16,7 +16,7 @@ rem specific language governing permissions and limitations under the License.
 setlocal
 
 rem Guess POLARIS_HOME if not defined
-set "SERVER_NAME=polaris-server.exe"
+set "SERVER_NAME=polaris-sidecar.exe"
 set "CURRENT_DIR=%cd%"
 if not "%POLARIS_HOME%" == "" goto gotHome
 set "POLARIS_HOME=%CURRENT_DIR%"

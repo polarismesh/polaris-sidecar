@@ -13,5 +13,5 @@ rem under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 rem CONDITIONS OF ANY KIND, either express or implied. See the License for the
 rem specific language governing permissions and limitations under the License.
 
-set "SERVER_NAME=polaris-server.exe"
+set "SERVER_NAME=polaris-sidecar.exe"
 tasklist | findstr "%SERVER_NAME%"

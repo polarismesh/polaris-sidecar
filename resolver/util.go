@@ -19,12 +19,16 @@ package resolver
 
 import (
 	"fmt"
+	"github.com/polarismesh/polaris-go/pkg/config"
 	"strings"
 
 	"github.com/polarismesh/polaris-go/pkg/model"
 )
 
-const Quota = "."
+const (
+	Quota        = "."
+	sysNamespace = "polaris"
+)
 
 // ParseQname parse the qname into service and suffix
 // qname format: <service>.<namespace>.<suffix>
@@ -37,13 +41,16 @@ func ParseQname(qname string, suffix string) (*model.ServiceKey, error) {
 	if strings.HasSuffix(qname, Quota) {
 		qname = qname[0 : len(qname)-1]
 	}
-	sepIndex := strings.Index(qname, Quota)
+	sepIndex := strings.LastIndex(qname, Quota)
 	if sepIndex < 0 {
 		return nil, fmt.Errorf("fail to parse qname %s: 1st dot index is -1", qname)
 	}
 	var namespace string
 	var serviceName string
 	namespace = qname[sepIndex+1:]
+	if strings.ToLower(namespace) == sysNamespace {
+		namespace = config.ServerNamespace
+	}
 	serviceName = qname[:sepIndex]
 	return &model.ServiceKey{Namespace: namespace, Service: serviceName}, nil
 }
