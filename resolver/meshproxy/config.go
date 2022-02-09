@@ -25,8 +25,8 @@ import (
 type resolverConfig struct {
 	RegistryHost      string `json:"registry_host"`
 	RegistryPort      int    `json:"registry_port"`
-	ReloadIntervalSec int    `yaml:"reload_interval_sec"`
-	DNSAnswerIp       string `yaml:"dns_answer_ip"`
+	ReloadIntervalSec int    `json:"reload_interval_sec"`
+	DNSAnswerIp       string `json:"dns_answer_ip"`
 }
 
 func parseOptions(options map[string]interface{}) (*resolverConfig, error) {

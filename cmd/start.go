@@ -57,5 +57,5 @@ func init() {
 	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverDnsAgentRouteLabels,
 		"resolver-dnsagent-route-labels", "", "polaris sidecar resolver dnsagent route lables")
 	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverMeshProxyEnabled,
-		"meshproxy-enabled", "", "polaris sidecar resolver dnsagent enabled")
+		"meshproxy-enabled", "", "polaris sidecar resolver mesh proxy enabled")
 }

@@ -22,9 +22,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/polarismesh/polaris-sidecar/log"
+)
+
+const (
+	XdsClusterDirectionOut = "out"
+	XdsClusterDirectionIn = "in"
 )
 
 type clusterConfig struct {
@@ -95,7 +101,17 @@ func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
 	}
 
 	for _, c := range configDump.Configs {
-		services = append(services, c.Cluster.Name)
+		serviceName := c.Cluster.Name
+		ss := strings.Split(c.Cluster.Name, "|")
+		if len(ss) > 2 {
+			// xds v2 , examples: "out|80|details"
+			if ss[0] == XdsClusterDirectionOut {
+				serviceName = ss[2]
+			} else {
+				continue
+			}
+		}
+		services = append(services, serviceName)
 	}
 
 	return services, nil
