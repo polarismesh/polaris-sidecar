@@ -91,7 +91,10 @@ func parseResolvConf(bindLocalhost bool) ([]string, []string) {
 	var searchNames []string
 	var nameservers []string
 	if dnsConfig != nil {
-		searchNames = dnsConfig.Search
+		for _, search := range dnsConfig.Search {
+			searchNames = append(searchNames, search + ".")
+		}
+
 		for _, server := range dnsConfig.Servers {
 			if server == "127.0.0.1" && bindLocalhost {
 				continue

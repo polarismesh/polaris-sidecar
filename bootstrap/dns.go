@@ -44,7 +44,7 @@ func (d *dnsHandler) preprocess(qname string) string {
 	}
 	for _, searchName := range d.searchNames {
 		if strings.HasSuffix(qname, searchName) {
-			return qname[:len(qname)-len(searchName)-1]
+			return qname[:len(qname)-len(searchName)]
 		}
 	}
 	return qname

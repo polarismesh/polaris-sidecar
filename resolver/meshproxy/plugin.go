@@ -90,26 +90,28 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question) *dns
 func (r *resolverMesh) Start(ctx context.Context) {
 	interval := time.Duration(r.config.ReloadIntervalSec) * time.Second
 
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	var currentServices []string
-	for {
-		select {
-		case <-ticker.C:
-			services, err := r.registry.GetCurrentNsService()
-			if err != nil {
-				log.Errorf("[mesh] error to get services, err: %v", err)
-				continue
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		var currentServices []string
+		for {
+			select {
+			case <-ticker.C:
+				services, err := r.registry.GetCurrentNsService()
+				if err != nil {
+					log.Errorf("[mesh] error to get services, err: %v", err)
+					continue
+				}
+				sort.Strings(services)
+				if ifServiceListChanged(currentServices, services) {
+					r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
+					currentServices = services
+				}
+			case <-ctx.Done():
+				return
 			}
-			sort.Strings(services)
-			if ifServiceListChanged(currentServices, services) {
-				r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
-				currentServices = services
-			}
-		case <-ctx.Done():
-			return
 		}
-	}
+	}()
 }
 
 func ifServiceListChanged(currentServices, newNsServices []string) bool {
