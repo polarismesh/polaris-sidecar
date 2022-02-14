@@ -16,4 +16,4 @@ COPY polaris-sidecar /root/polaris-sidecar
 
 WORKDIR /root
 
-CMD ["/root/polaris-sidecar", "start"]
+ENTRYPOINT ["polaris-sidecar"]
