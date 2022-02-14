@@ -48,14 +48,14 @@ func init() {
 		&bootConfig.Bind, "bind", "b", "", "polaris sidecar bind host")
 	startCmd.PersistentFlags().IntVarP(
 		&bootConfig.Port, "port", "p", 0, "polaris sidecar listen port")
-	startCmd.PersistentFlags().StringVar(
-		&bootConfig.LogLevel, "log-level", "", "polaris sidecar logger level")
-	startCmd.PersistentFlags().StringVar(&bootConfig.RecurseEnabled,
-		"recurse-enabled", "", "polaris sidecar recurse enabled")
-	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverDnsAgentEnabled,
-		"resolver-dnsagent-enabled", "", "polaris sidecar resolver dnsagent enabled")
-	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverDnsAgentRouteLabels,
-		"resolver-dnsagent-route-labels", "", "polaris sidecar resolver dnsagent route lables")
-	startCmd.PersistentFlags().StringVar(&bootConfig.ResolverMeshProxyEnabled,
-		"meshproxy-enabled", "", "polaris sidecar resolver mesh proxy enabled")
+	startCmd.PersistentFlags().StringVarP(
+		&bootConfig.LogLevel, "log-level", "l", "", "polaris sidecar logger level")
+	startCmd.PersistentFlags().StringVarP(&bootConfig.RecurseEnabled,
+		"recurse-enabled", "re", "", "polaris sidecar recurse enabled")
+	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverDnsAgentEnabled,
+		"dnsagent-enabled", "de", "", "polaris sidecar resolver dnsagent enabled")
+	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverDnsAgentRouteLabels,
+		"dnsagent-route-labels", "drl", "", "polaris sidecar resolver dnsagent route lables")
+	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverMeshProxyEnabled,
+		"meshproxy-enabled", "me", "", "polaris sidecar resolver mesh proxy enabled")
 }

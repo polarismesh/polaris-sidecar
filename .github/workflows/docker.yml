@@ -3,9 +3,6 @@ name: DockerImage
 on:
   workflow_dispatch:
     inputs:
-      docker_repository:
-        description: 'docker repository for polaris'
-        required: true
       polaris_tag:
         description: 'tag for polaris'
         required: true
@@ -40,7 +37,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          DOCKER_REPOSITORY: ${{ github.event.inputs.docker_repository }}
+          DOCKER_REPOSITORY: polarismesh/polaris-sidecar
           DOCKER_TAG: ${{ github.event.inputs.polaris_tag }}
           DOCKER_USER: ${{ github.event.inputs.docker_username }}
           DOCKER_PASS: ${{ github.event.inputs.docker_password }}

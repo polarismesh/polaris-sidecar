@@ -2,43 +2,41 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: sidecar-dns-example
-  name: sidecar-dns-example
+    app: polaris-sidecar-dns
+  name: polaris-sidecar-dns
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
   selector:
     matchLabels:
-      app: sidecar-dns-example
+      app: polaris-sidecar-dns
   template:
     metadata:
       labels:
-        app: sidecar-dns-example
+        app: polaris-sidecar-dns
     spec:
       containers:
-        - image: polarismesh/examples/sidecar-dns-example:v1.0.0
-          imagePullPolicy: Always
-          name: sidecar-dns-example
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
-        - image: polarismesh/polaris-sidecar:v1.0.0
+        - image: polarismesh/polaris-sidecar:lastest
           imagePullPolicy: Always
           name: polaris-sidecar
+          args:
+            - start
+            - -p
+            - "53"
+            - -re
+            - "false"
+            - -de
+            - "true"
+            - -me
+            - "false"
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
-            - mountPath: /root/polaris-sidecar.yaml
-              name: polaris-sidecar-config
-              subPath: polaris-sidecar.yaml
             - mountPath: /root/polaris.yaml
               name: polaris-client-config
               subPath: polaris.yaml
       restartPolicy: Always
       volumes:
-        - configMap:
-            defaultMode: 420
-            name: polaris-sidecar-config
-          name: polaris-sidecar-config
         - configMap:
             defaultMode: 420
             name: polaris-client-config
