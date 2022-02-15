@@ -10,6 +10,7 @@
  * https://opensource.org/licenses/BSD-3-Clause
  *
  * Unless required by applicable law or agreed to in writing, software distributed
+
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
@@ -51,11 +52,11 @@ func init() {
 	startCmd.PersistentFlags().StringVarP(
 		&bootConfig.LogLevel, "log-level", "l", "", "polaris sidecar logger level")
 	startCmd.PersistentFlags().StringVarP(&bootConfig.RecurseEnabled,
-		"recurse-enabled", "re", "", "polaris sidecar recurse enabled")
+		"recurse-enabled", "r", "", "polaris sidecar recurse enabled")
 	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverDnsAgentEnabled,
-		"dnsagent-enabled", "de", "", "polaris sidecar resolver dnsagent enabled")
+		"dnsagent-enabled", "d", "", "polaris sidecar resolver dnsagent enabled")
 	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverDnsAgentRouteLabels,
-		"dnsagent-route-labels", "drl", "", "polaris sidecar resolver dnsagent route lables")
+		"dnsagent-route-labels", "o", "", "polaris sidecar resolver dnsagent route lables")
 	startCmd.PersistentFlags().StringVarP(&bootConfig.ResolverMeshProxyEnabled,
-		"meshproxy-enabled", "me", "", "polaris sidecar resolver mesh proxy enabled")
+		"meshproxy-enabled", "m", "", "polaris sidecar resolver mesh proxy enabled")
 }
