@@ -23,11 +23,11 @@ spec:
             - start
             - -p
             - "53"
-            - -re
+            - -r
             - "false"
-            - -de
+            - -d
             - "true"
-            - -me
+            - -m
             - "false"
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
