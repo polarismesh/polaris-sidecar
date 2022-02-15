@@ -1,3 +1,24 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: polaris-sidecar-dns
+  labels:
+    app: polaris-sidecar-dns
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 53
+      protocol: TCP
+      name: dns-tcp-server
+      targetPort: 53
+    - port: 53
+      protocol: UDP
+      name: dns-udp-server
+      targetPort: 53
+  selector:
+    app: polaris-sidecar-dns
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
