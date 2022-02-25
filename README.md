@@ -79,42 +79,4 @@ polaris.checker.polaris.svc.polaris. 10 IN AAAA ::ffff:9.134.15.118
 
 #### 容器环境下安装
 
-polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网络可以访问dockerhub公有镜像仓库。
-
-1. 从[Releases](https://github.com/polarismesh/polaris-sidecar/releases)下载最新版本的源码包，解压并进入解压后的源码目录。
-2. 修改配置文件deploy/configmap/polaris-client-config.yaml，写入北极星服务端的地址，端口号使用8091（GRPC端口）。
-3. 先添加configmap：kubectl apply -f deploy/dnsagent/polaris-client-config.yaml
-4. 部署polaris-sidecar：kubectl apply -f deploy/dnsagent/deployment-dnsagent.yaml
-5. 通过polaris-sidecar部署后的k8s服务名（默认为polaris-sidecar-dns）来获取Cluster-IP。
-    ```
-    $ kubectl get svc polaris-sidecar-dns --output jsonpath='{.spec.clusterIP}'
-    10.35.240.78%
-    ```
-6. 配置CoreDNS，在coredns的configmap中，增加polaris-sidecar的DNS解析配置：
-    ```
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      labels:
-        addonmanager.kubernetes.io/mode: EnsureExists
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            <Existing CoreDNS definition>
-        }
-    +   svc.polaris {
-    +     errors
-    +     cache 30
-    +     forward . <polaris-dns-service-cluster-ip>
-    +   }
-    ```
-
-7. 验证安装，通过执行一个小型的job来进行dns解析的验证：
-
-    ```shell
-    $ kubectl apply --filename deploy/job/job.yaml
-    ```
-
-​       job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。
+支持中
