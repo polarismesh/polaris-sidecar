@@ -40,6 +40,7 @@ spec:
         - image: polarismesh/polaris-sidecar:lastest
           imagePullPolicy: Always
           name: polaris-sidecar
+          command: ["./polaris-sidecar"]
           args:
             - start
             - -p
@@ -50,12 +51,32 @@ spec:
             - "true"
             - -m
             - "false"
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
+          resources:
+            limits:
+              cpu: 100m
+              memory: 500Mi
+            requests:
+              cpu: 100m
+              memory: 500Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+              - NET_ADMIN
+              - NET_RAW
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsGroup: 0
+            runAsNonRoot: false
+            runAsUser: 0
           volumeMounts:
             - mountPath: /root/polaris.yaml
               name: polaris-client-config
               subPath: polaris.yaml
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
       restartPolicy: Always
       volumes:
         - configMap:
