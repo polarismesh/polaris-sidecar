@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
+        goos: [linux]
         goarch: [amd64, arm64]
         exclude:
           - goos: windows
@@ -42,7 +42,7 @@ jobs:
         run: |
           echo "version is $VERSION"
           bash build_auto.sh $VERSION
-          PACKAGE_NAME=$(ls | grep polaris-sidecar-release*.zip | sed -n '1p')
+          PACKAGE_NAME=$(ls | grep polaris-sidecar-install*.zip | sed -n '1p')
           echo ::set-output name=name::${PACKAGE_NAME}
 
       - name: Upload asset
