@@ -1,11 +1,13 @@
 # /bin/bash
 
+version=$1
+
 # 先构建部署包
 bash build.sh
 
 # 构建安装包
 
-package_name="polaris-sidecar-install.zip"
+package_name="polaris-sidecar-install-${version}.zip"
 folder_name="polaris-sidecar-install"
 
 mkdir -p ${folder_name}
