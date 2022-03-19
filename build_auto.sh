@@ -1,7 +1,5 @@
 # /bin/bash
 
-# 构建安装包
-
 set -e
 
 if [ $# -gt 0 ]; then

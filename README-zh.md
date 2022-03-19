@@ -140,4 +140,4 @@ polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网�
     $ kubectl apply --filename deploy/job/job.yaml
     ```
 
-​       job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。
+3. job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。

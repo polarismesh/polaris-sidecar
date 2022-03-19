@@ -140,4 +140,4 @@ Polaris-Sidecar mirroring is archived into dockerhub, requiring a deployed envir
     $ kubectl apply --filename deploy/job/job.yaml
     ```
 
-​       After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
+3. After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
