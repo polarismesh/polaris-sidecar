@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "version is $VERSION"
           bash build_auto.sh $VERSION
-          PACKAGE_NAME=$(ls | grep polaris-sidecar-install*.zip | sed -n '1p')
+          PACKAGE_NAME=$(ls | grep polaris-sidecar-local*.zip | sed -n '1p')
           echo ::set-output name=name::${PACKAGE_NAME}
 
       - name: Upload asset

@@ -26,7 +26,7 @@ if [ "${GOARCH}" == "" ]; then
   GOARCH=$(go env GOARCH)
 fi
 
-package_name="polaris-sidecar-install_${version}.${GOOS}.${GOARCH}.zip"
+package_name="polaris-sidecar-local_${version}.${GOOS}.${GOARCH}.zip"
 folder_name="polaris-sidecar-install"
 
 mkdir -p ${folder_name}
