@@ -1,10 +1,5 @@
 # /bin/bash
 
-version=$1
-
-# 先构建部署包
-bash build.sh
-
 # 构建安装包
 
 set -e
@@ -25,6 +20,9 @@ fi
 if [ "${GOARCH}" == "" ]; then
   GOARCH=$(go env GOARCH)
 fi
+
+# 先构建部署包
+bash build.sh ${version}
 
 package_name="polaris-sidecar-local_${version}.${GOOS}.${GOARCH}.zip"
 folder_name="polaris-sidecar-install"
