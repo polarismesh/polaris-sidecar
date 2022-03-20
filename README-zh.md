@@ -11,6 +11,10 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 
 ## 本地DNS模式
 
+### 架构图
+
+![架构图](./image/polaris_architecture.png)
+
 ### 提供功能
 
 - 基于DNS的服务发现能力：直接通过域名```<service>.<namespace>.svc.polaris```进行拉取服务实例地址列表。
@@ -21,7 +25,9 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 
 #### 前提条件
 
-- 在安装和使用 polaris-sidecar 之前，需要先安装北极星服务端，安装方式请参考[北极星服务端安装文档](https://polarismesh.cn/zh/doc/快速入门/安装服务端/安装单机版.html#单机版安装)。
+- 在安装和使用 polaris-sidecar 之前，需要先安装北极星服务端
+  - 虚拟机环境参考[北极星服务端安装文档](https://polarismesh.cn/zh/doc/快速入门/安装服务端/安装单机版.html#单机版安装)。
+  - 容器环境参考[北极星服务端安装文档](https://polarismesh.cn/zh/doc/%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/%E5%AE%89%E8%A3%85%E6%9C%8D%E5%8A%A1%E7%AB%AF/%E5%AE%89%E8%A3%85%E5%8D%95%E6%9C%BA%E7%89%88.html#%E5%AE%B9%E5%99%A8%E5%8C%96)。
 
 #### 虚拟机环境下安装
 
@@ -90,54 +96,14 @@ polaris.checker.polaris.svc.polaris. 10 IN AAAA ::ffff:9.134.15.118
 
 polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网络可以访问dockerhub公有镜像仓库。
 
-1. 从[Releases](https://github.com/polarismesh/polaris-sidecar/releases)下载最新版本的源码包，解压并进入解压后的源码目录。
-2. 修改配置文件deploy/configmap/polaris-client-config.yaml，写入北极星服务端的地址，端口号使用8091（GRPC端口）。
-3. 先添加configmap：kubectl apply -f deploy/dnsagent/polaris-client-config.yaml
-4. 部署polaris-sidecar：kubectl apply -f deploy/dnsagent/deployment-dnsagent.yaml
-5. 通过polaris-sidecar部署后的k8s服务名（默认为polaris-sidecar-dns）来获取Cluster-IP。
-    ```
-    $ kubectl get svc polaris-sidecar-dns --output jsonpath='{.spec.clusterIP}'
-    10.35.240.78%
-    ```
-6. 配置CoreDNS，在coredns的configmap中，增加polaris-sidecar的DNS解析配置：
-    ```
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      labels:
-        addonmanager.kubernetes.io/mode: EnsureExists
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            <Existing CoreDNS definition>
-        }
-    +   svc.polaris {
-    +     errors
-    +     cache 30
-    +     forward . <polaris-dns-service-cluster-ip>
-    +   }
-    ```
-
-7. 验证安装，通过执行一个小型的job来进行dns解析的验证：
-
-    ```shell
-    $ kubectl apply --filename deploy/job/job.yaml
-    ```
-
-​       job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。
-
-
-#### Sidecar模式部署
-
-polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网络可以访问dockerhub公有镜像仓库。
-
 1. 参考 [polaris-controller 文档](https://github.com/polarismesh/polaris-controller/blob/main/README.md) 
 2. 验证安装，通过执行一个小型的job来进行dns解析的验证：
 
     ```shell
     $ kubectl apply --filename deploy/job/job.yaml
     ```
+3. 部署job之后的POD详细如下
+   ![deploy_job](./image/deploy_job.png)
+4. job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。
+   ![dig_result_job](./image/dig_result_job.png)
 
-3. job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。

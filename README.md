@@ -11,6 +11,10 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 
 ## Local DNS mode
 
+### Architecture
+
+![Architecture](./image/polaris_architecture.png)
+
 ### Function
 
 - DNS-based service discovery capabilities: Directly pass the domain name ```<service>. <Namespace> .svc.polaris``` to pull the service instance address list.
@@ -139,5 +143,7 @@ Polaris-Sidecar mirroring is archived into dockerhub, requiring a deployed envir
     ```shell
     $ kubectl apply --filename deploy/job/job.yaml
     ```
-
-3. After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
+3. The POD after deploying Job is detailed below
+   ![deploy_job](./image/deploy_job.png)
+4. After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
+   ![dig_result_job](./image/dig_result_job.png)
