@@ -17,7 +17,7 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 
 ### 提供功能
 
-- 基于DNS的服务发现能力：直接通过域名```<service>.<namespace>.svc.polaris```进行拉取服务实例地址列表。
+- 基于DNS的服务发现能力：直接通过域名```<service>.<namespace>```进行拉取服务实例地址列表。
 - 故障节点剔除能力：自动剔除不健康和隔离实例，保障业务可靠性。
 - 标签路由能力：通过配置标签，通过标签筛选并返回满足标签规则的服务实例地址列表。
 
@@ -64,12 +64,12 @@ nameserver 127.0.0.1
 nameserver x.x.x.x
 ```
 
-7. 验证安装，使用格式为```<service>.<namespace>.svc.polaris```的域名进行访问，可以获得服务的IP地址。
+7. 验证安装，使用格式为```<service>.<namespace>```的域名进行访问，可以获得服务的IP地址。
 
 ```
-# dig polaris.checker.polaris.svc.polaris
+# dig polaris.checker.polaris
 
-; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris.svc.polaris
+; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10696
@@ -79,10 +79,10 @@ nameserver x.x.x.x
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 4096
 ;; QUESTION SECTION:
-;polaris.checker.polaris.svc.polaris. IN        A
+;polaris.checker.polaris. IN        A
 
 ;; ANSWER SECTION:
-polaris.checker.polaris.svc.polaris. 10 IN AAAA ::ffff:9.134.15.118
+polaris.checker.polaris. 10 IN AAAA ::ffff:1.1.1.1
 
 ;; Query time: 0 msec
 ;; SERVER: 127.0.0.1#53(127.0.0.1)
@@ -99,11 +99,34 @@ polaris-sidecar镜像是归档到dockerhub中，需要确保部署的环境网�
 1. 参考 [polaris-controller 文档](https://github.com/polarismesh/polaris-controller/blob/main/README.md) 
 2. 验证安装，通过执行一个小型的job来进行dns解析的验证：
 
-    ```shell
-    $ kubectl apply --filename deploy/job/job.yaml
-    ```
+```shell
+$ kubectl apply --filename deploy/job/job.yaml
+```
 3. 部署job之后的POD详细如下
    ![deploy_job](./image/deploy_job.png)
 4. job运行完后，可以通过查询POD日志确认运行情况。默认情况下，会输出成功的服务DNS查询结果，如果出现错误，则DNS配置可能出现问题。
-   ![dig_result_job](./image/dig_result_job.png)
+
+```
+# dig polaris.checker.polaris
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10696
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;polaris.checker.polaris. IN        A
+
+;; ANSWER SECTION:
+polaris.checker.polaris. 10 IN AAAA ::ffff:1.1.1.1
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1)
+;; WHEN: Wed Jan 26 00:21:34 CST 2022
+;; MSG SIZE  rcvd: 127
+```
 

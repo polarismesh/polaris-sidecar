@@ -17,7 +17,7 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 
 ### Function
 
-- DNS-based service discovery capabilities: Directly pass the domain name ```<service>. <Namespace> .svc.polaris``` to pull the service instance address list.
+- DNS-based service discovery capabilities: Directly pass the domain name ```<service>.<Namespace>``` to pull the service instance address list.
 - Fault nodes eliminate the ability: automatically eliminate unhealthy and isolation instances to ensure business reliability. 
 - Label Routing Ability: By configuring tags, filtering and returning a list of service instance addresses that meet label rules.
 
@@ -46,7 +46,7 @@ global:
       - 127.0.0.1:8091
 ```
 
-5. Enter the decompressed directory, perform Tool / Start.sh to start, then perform Tool / P.SH to view the process whether it is successful.
+5. Enter the decompressed directory, perform tool/start.sh to start, then perform tool/p.sh to view the process whether it is successful.
 
 ```
 # bash tool/start.sh
@@ -62,12 +62,12 @@ nameserver 127.0.0.1
 nameserver x.x.x.x
 ```
 
-7. Verify the installation, use the format to join the ```.svc.polaris``` More 's domain name, you can get the IP address of the service.
+7. Verify the installation, you can get the IP address of the service.
 
 ```
-# dig polaris.checker.polaris.svc.polaris
+# dig polaris.checker.polaris
 
-; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris.svc.polaris
+; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris
 ;; global options: +cmd
 ;; Got answer:
 ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10696
@@ -77,10 +77,10 @@ nameserver x.x.x.x
 ;; OPT PSEUDOSECTION:
 ; EDNS: version: 0, flags:; udp: 4096
 ;; QUESTION SECTION:
-;polaris.checker.polaris.svc.polaris. IN        A
+;polaris.checker.polaris. IN        A
 
 ;; ANSWER SECTION:
-polaris.checker.polaris.svc.polaris. 10 IN AAAA ::ffff:9.134.15.118
+polaris.checker.polaris. 10 IN AAAA ::ffff:9.134.15.118
 
 ;; Query time: 0 msec
 ;; SERVER: 127.0.0.1#53(127.0.0.1)
@@ -94,56 +94,36 @@ Remarks: If you need to use the domain name to discover, you must ensure that th
 
 Polaris-Sidecar mirroring is archived into dockerhub, requiring a deployed environmental network to access DockerHub public mirror warehouse.
 
-1. From [Releases](https://github.com/polarismesh/polaris-sidecar/releases) download the latest version of the source package, extract and enter the source code directory after the decompression。
-2. Modify the configuration file **deploy/configmap/polaris-client-config.yaml**, write the address of the Arctic Star server, port number uses 8091 (GRPC port).
-3. Add configmap first：kubectl apply -f deploy/dnsagent/polaris-client-config.yaml
-4. Deploy Polaris-Sidecar：kubectl apply -f deploy/dnsagent/deployment-dnsagent.yaml
-5. CLUSTER-IP is obtained through the K8S service name (default to **polaris-sidecar-dns**) after deployment of Polaris-Sidecar.
-    ```
-    $ kubectl get svc polaris-sidecar-dns --output jsonpath='{.spec.clusterIP}'
-    10.35.240.78%
-    ```
-6. Configure CoredNs, in Corals' configMAP, add Polaris-Sidecar's DNS parsing configuration:
-    ```
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      labels:
-        addonmanager.kubernetes.io/mode: EnsureExists
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            <Existing CoreDNS definition>
-        }
-    +   svc.polaris {
-    +     errors
-    +     cache 30
-    +     forward . <polaris-dns-service-cluster-ip>
-    +   }
-    ```
-
-7. Verify the installation, by performing a small JOB to perform DNS resolution verification:
-
-    ```shell
-    $ kubectl apply --filename deploy/job/job.yaml
-    ```
-
-​      After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
-
-
-#### Sidecar mode deployment
-
-Polaris-Sidecar mirroring is archived into dockerhub, requiring a deployed environmental network to access DockerHub public mirror warehouse.
-
 1. Refer to [polaris-controller Document](https://github.com/polarismesh/polaris-controller/blob/main/README.md) 
 2. Verify the installation, by performing a small JOB to perform DNS resolution verification:
 
-    ```shell
-    $ kubectl apply --filename deploy/job/job.yaml
-    ```
+```shell
+$ kubectl apply --filename deploy/job/job.yaml
+```
 3. The POD after deploying Job is detailed below
    ![deploy_job](./image/deploy_job.png)
 4. After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
-   ![dig_result_job](./image/dig_result_job.png)
+
+```
+# dig polaris.checker.polaris
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-29.el7_2.2 <<>> polaris.checker.polaris
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10696
+;; flags: qr aa rd; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+;; WARNING: recursion requested but not available
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;polaris.checker.polaris. IN        A
+
+;; ANSWER SECTION:
+polaris.checker.polaris. 10 IN AAAA ::ffff:1.1.1.1
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1)
+;; WHEN: Wed Jan 26 00:21:34 CST 2022
+;; MSG SIZE  rcvd: 127
+```
