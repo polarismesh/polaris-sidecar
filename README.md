@@ -80,7 +80,7 @@ nameserver x.x.x.x
 ;polaris.checker.polaris. IN        A
 
 ;; ANSWER SECTION:
-polaris.checker.polaris. 10 IN AAAA ::ffff:9.134.15.118
+polaris.checker.polaris. 10 IN AAAA ::ffff:1.1.1.1
 
 ;; Query time: 0 msec
 ;; SERVER: 127.0.0.1#53(127.0.0.1)
