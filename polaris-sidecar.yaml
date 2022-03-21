@@ -18,7 +18,7 @@ resolvers:
   - name: dnsagent
     dns_ttl: 10
     enable: true
-    suffix: svc.polaris
+    suffix: "."
   - name: meshproxy
     dns_ttl: 120
     enable: false

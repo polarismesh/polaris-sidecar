@@ -6,8 +6,6 @@ if [ $# != 3 ]; then
 fi
 
 docker_tag=$1
-docker_username=$2
-docker_password=$3
 
 echo "docker repository : polarismesh/polaris-sidecar, tag : ${docker_tag}"
 
@@ -19,12 +17,6 @@ if [ $? != 0 ]; then
 fi
 
 docker build --network=host -t polarismesh/polaris-sidecar:${docker_tag} ./
-
-docker login --username=${docker_username} --password=${docker_password}
-
-if [[ $? != 0 ]]; then
-    echo "docker login failed"
-fi
 
 docker push polarismesh/polaris-sidecar:${docker_tag}
 docker tag polarismesh/polaris-sidecar:${docker_tag} polarismesh/polaris-sidecar:latest
