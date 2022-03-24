@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $# != 3 ]; then
-    echo "e.g.: bash $0 v1.0 docker_username docekr_user_password"
+if [ $# != 1 ]; then
+    echo "e.g.: bash $0 v1.0"
     exit 1
 fi
 
