@@ -30,6 +30,10 @@ import (
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
+func init() {
+	resolver.Register(&resolverDiscovery{})
+}
+
 const name = resolver.PluginNameDnsAgent
 
 type resolverDiscovery struct {
@@ -88,11 +92,11 @@ func (r *resolverDiscovery) Destroy() {
 //
 // * NOTIMP (dns.RcodeNotImplemented)
 func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question) *dns.Msg {
-	if question.Qtype != dns.TypeA && question.Qtype != dns.TypeAAAA {
+	if !targetQuestion(question) {
 		return nil
 	}
 	qname := question.Name
-	svcKey, err := resolver.ParseQname(qname, r.suffix)
+	svcKey, err := resolver.ParseQname(question.Qtype, qname, r.suffix)
 	if nil != err {
 		log.Errorf("[discovery] invalid qname %s, err: %v", qname, err)
 		return nil
@@ -115,31 +119,55 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 	msg := &dns.Msg{}
 	instances := resp.GetInstances()
 	//do reorder and unique
-	hosts := make(map[string]bool, len(instances))
-	for _, instance := range instances {
-		hosts[instance.GetHost()] = true
-	}
-	for host := range hosts {
-		address := net.ParseIP(host)
+	qType := question.Qtype
+	for i := range instances {
+		ins := instances[i]
 		var rr dns.RR
-		if question.Qtype != dns.TypeA {
+		switch qType {
+		case dns.TypeA:
 			rr = &dns.A{
 				Hdr: dns.RR_Header{Name: qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-				A:   address,
+				A:   net.ParseIP(ins.GetHost()),
 			}
-		} else {
+		case dns.TypeSRV:
+			rr = &dns.SRV{
+				Hdr:      dns.RR_Header{Name: qname, Rrtype: dns.TypeSRV, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+				Priority: uint16(ins.GetPriority()),
+				Weight:   uint16(ins.GetWeight()),
+				Port:     uint16(ins.GetPort()),
+				Target:   ins.GetHost(),
+			}
+		default:
 			rr = &dns.AAAA{
 				Hdr:  dns.RR_Header{Name: qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-				AAAA: address,
+				AAAA: net.ParseIP(ins.GetHost()),
 			}
 		}
 		msg.Answer = append(msg.Answer, rr)
 	}
+
+	truncateAt := 4096
+	if question.Qtype == dns.TypeSRV {
+		truncateAt = 1024
+	}
+	if len(msg.Answer) > truncateAt {
+		msg.Answer = msg.Answer[:truncateAt]
+	}
+
 	msg.Authoritative = true
 	msg.Rcode = dns.RcodeSuccess
 	return msg
 }
 
-func init() {
-	resolver.Register(&resolverDiscovery{})
+func targetQuestion(question dns.Question) bool {
+	if question.Qtype == dns.TypeA {
+		return true
+	}
+	if question.Qtype == dns.TypeAAAA {
+		return true
+	}
+	if question.Qtype == dns.TypeSRV {
+		return true
+	}
+	return false
 }
