@@ -19,8 +19,10 @@ package resolver
 
 import (
 	"fmt"
-	"github.com/polarismesh/polaris-go/pkg/config"
 	"strings"
+
+	"github.com/miekg/dns"
+	"github.com/polarismesh/polaris-go/pkg/config"
 
 	"github.com/polarismesh/polaris-go/pkg/model"
 )
@@ -32,7 +34,16 @@ const (
 
 // ParseQname parse the qname into service and suffix
 // qname format: <service>.<namespace>.<suffix>
-func ParseQname(qname string, suffix string) (*model.ServiceKey, error) {
+func ParseQname(dnsType uint16, qname string, suffix string) (*model.ServiceKey, error) {
+
+	// _service._proto.name.
+	if dnsType == dns.TypeSRV {
+		infos := dns.SplitDomainName(qname)
+		service := infos[0]
+		protocol := infos[1]
+		qname = qname[len(service+".")+len(protocol+"."):]
+	}
+
 	var matched bool
 	qname, matched = MatchSuffix(qname, suffix)
 	if !matched {
