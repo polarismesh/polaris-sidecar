@@ -12,3 +12,5 @@ WORKDIR /data
 RUN chmod -R a+rw /data
 
 COPY polaris-sidecar /data/polaris-sidecar
+
+RUN chmod +x /data/polaris-sidecar
