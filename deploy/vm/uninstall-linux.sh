@@ -33,7 +33,7 @@ function rollback_dns_conf() {
 
 	echo "" >/etc/resolv.conf
 	cat "${dns_back_dir}/${last_back_file}" | while read line; do
-		echo "[INFO] ${line}"
+		echo "[DEBUG] ${line}"
 		echo "${line}" >>/etc/resolv.conf
 	done
 }

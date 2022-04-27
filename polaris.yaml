@@ -1,7 +1,7 @@
 global:
   serverConnector:
     addresses:
-      - 127.0.0.1:8091
+      - ##POLARIS_SERVER_ADDR##
   location:
     # 设置 polaris-sidecar 进程地理信息的提供插件
     # 设置为 env 时，可以在 linux 中注入以下环境变量
