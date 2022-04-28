@@ -1,25 +1,30 @@
 #! /bin/bash
 
 dns_back_dir="./"
-polaris_server_addr="127.0.0.1:8091"
-while getopts "back_dir:polaris_server_addr:help" arg; do #选项后面的冒号表示该选项需要参数
-    case $arg in
-    back_dir)
-        dns_back_dir = "$arg"
+polaris_server_addr=""
+while getopts ':b:s:h' OPT; do #选项后面的冒号表示该选项需要参数
+    case $OPT in
+    b)
+        dns_back_dir="$OPTARG"
         ;;
-    polaris_server_addr)
-        polaris_server_addr = "$arg"
+    s)
+        polaris_server_addr="$OPTARG"
         ;;
-    help)
-        echo "./install-linux.sh dns_back_dir \${dns_back_dir} polaris_server_addr \${polaris_server_addr}"
+    h)
+        echo "./install-linux.sh -s \${polaris_server_addr} -d \${dns_back_dir}"
         exit 0
         ;;
     ?) #当有不认识的选项的时候arg为?
-        echo "./install-linux.sh dns_back_dir \${dns_back_dir} polaris_server_addr \${polaris_server_addr}"
+        echo "./install-linux.sh -s \${polaris_server_addr} -d \${dns_back_dir}"
         exit 1
         ;;
     esac
 done
+
+if [[ "${polaris_server_addr}" == "" ]]; then
+    echo "[ERROR] need set polaris_server_addr, eg: ./install-linux.sh -s \${polaris_server_addr}"
+    exit 1
+fi
 
 echo "[INFO] input param: dns_backdir = ${dns_back_dir}"
 echo "[INFO] input param: polaris_server_addr = ${polaris_server_addr}"
@@ -30,7 +35,7 @@ function install_polaris_sidecar() {
     local polaris_sidecar_num=$(ps -ef | grep polaris-sidecar | grep -v grep | wc -l)
     if [ ${polaris_sidecar_num} -ge 1 ]; then
         echo -e "[ERROR] polaris-sidecar is running, exit"
-        return -1
+        exit -1
     fi
 
     local polaris_sidecar_pkg_num=$(find . -name "polaris-sidecar-release*.zip" | wc -l)
@@ -74,7 +79,7 @@ function write_dns_conf() {
     echo "" >>/etc/resolv.conf
     echo "# old resolv.conf" >>/etc/resolv.conf
     cat ${dns_back_dir}/resolv.conf.bak_${version} | while read line; do
-        echo "[INFO] ${line}"
+        echo "[DEBUG] ${line}"
         echo ${line} >>/etc/resolv.conf
     done
 }
