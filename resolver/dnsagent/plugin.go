@@ -111,7 +111,7 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 	}
 	qname := question.Name
 
-	svcKey, _, err := resolver.ParseQname(question.Qtype, qname, r.suffix)
+	svcKey, err := resolver.ParseQname(question.Qtype, qname, r.suffix)
 	if nil != err {
 		log.Errorf("[discovery] invalid qname %s, err: %v", qname, err)
 		return nil
