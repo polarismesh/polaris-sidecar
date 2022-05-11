@@ -8,8 +8,8 @@ logger:
     - stdout
   error_output_paths:
     - stderr
-  rotate_output_path: log/polaris-sidecar.log
-  error_rotate_output_path: log/polaris-sidecar-error.log
+  rotate_output_path: logs/polaris-sidecar.log
+  error_rotate_output_path: logs/polaris-sidecar-error.log
   rotation_max_size: 100
   rotation_max_backups: 10
   rotation_max_age: 7
