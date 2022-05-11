@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
 
 	"gopkg.in/yaml.v2"
 
@@ -194,6 +195,9 @@ func (s *SidecarConfig) merge(config *BootConfig) error {
 				if len(config.ResolverDnsAgentRouteLabels) > 0 {
 					labels := parseLabels(config.ResolverDnsAgentRouteLabels)
 					if len(labels) > 0 {
+						if len(resolverConfig.Option) == 0 {
+							resolverConfig.Option = make(map[string]interface{})
+						}
 						resolverConfig.Option["route_labels"] = labels
 					}
 				}

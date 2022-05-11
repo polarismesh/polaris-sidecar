@@ -19,12 +19,15 @@ package dnsagent
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"net"
 	"strings"
 
 	"github.com/miekg/dns"
-	"github.com/polarismesh/polaris-go/api"
+	"github.com/polarismesh/polaris-go"
 	"github.com/polarismesh/polaris-go/pkg/model"
+	"go.uber.org/zap"
 
 	"github.com/polarismesh/polaris-sidecar/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
@@ -37,7 +40,7 @@ func init() {
 const name = resolver.PluginNameDnsAgent
 
 type resolverDiscovery struct {
-	consumer api.ConsumerAPI
+	consumer polaris.ConsumerAPI
 	suffix   string
 	dnsTtl   int
 	config   *resolverConfig
@@ -55,7 +58,7 @@ func (r *resolverDiscovery) Initialize(c *resolver.ConfigEntry) error {
 	if nil != err {
 		return err
 	}
-	r.consumer, err = api.NewConsumerAPI()
+	r.consumer, err = polaris.NewConsumerAPI()
 	if nil != err {
 		return err
 	}
@@ -80,7 +83,7 @@ func (r *resolverDiscovery) Destroy() {
 	}
 }
 
-func isAccept(qType uint16) bool {
+func canDoResolve(qType uint16) bool {
 	if qType == dns.TypeA {
 		return true
 	}
@@ -106,60 +109,36 @@ func isAccept(qType uint16) bool {
 //
 // * NOTIMP (dns.RcodeNotImplemented)
 func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question) *dns.Msg {
-	if !isAccept(question.Qtype) {
-		return nil
-	}
-	qname := question.Name
-
-	svcKey, err := resolver.ParseQname(question.Qtype, qname, r.suffix)
-	if nil != err {
-		log.Errorf("[discovery] invalid qname %s, err: %v", qname, err)
-		return nil
-	}
-	if nil == svcKey {
-		return nil
-	}
-	request := &api.GetInstancesRequest{}
-	request.Namespace = svcKey.Namespace
-	request.Service = svcKey.Service
-	if len(r.config.RouteLabels) > 0 {
-		request.SourceService = &model.ServiceInfo{Metadata: r.config.RouteLabels}
-	}
-	resp, err := r.consumer.GetInstances(request)
-	if nil != err {
-		log.Errorf("[discovery] fail to lookup service %s, err: %v", *svcKey, err)
+	if !canDoResolve(question.Qtype) {
 		return nil
 	}
 
 	msg := &dns.Msg{}
-	instances := resp.GetInstances()
+	qname := question.Name
+
+	labels := dns.SplitDomainName(qname)
+	for i := range labels {
+		if labels[i] == "_addr" {
+			ret, err := hex.DecodeString(labels[i-1])
+			if err != nil {
+				log.Error("decode ip str fail", zap.String("domain", qname), zap.Error(err))
+				return nil
+			}
+			rr := r.markRecord(question, net.IP(ret), nil)
+			msg.Answer = append(msg.Answer, rr)
+			return msg
+		}
+	}
+
+	instances, err := r.lookupFromPolaris(question)
+	if err != nil {
+		return nil
+	}
+
 	//do reorder and unique
 	for i := range instances {
-		instance := instances[i]
-		address := net.ParseIP(instance.GetHost())
-		var rr dns.RR
-
-		switch question.Qtype {
-		case dns.TypeA:
-			rr = &dns.A{
-				Hdr: dns.RR_Header{Name: qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-				A:   address,
-			}
-		case dns.TypeSRV:
-			rr = &dns.SRV{
-				Hdr:      dns.RR_Header{Name: qname, Rrtype: dns.TypeSRV, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-				Priority: uint16(instance.GetPriority()),
-				Weight:   uint16(instance.GetWeight()),
-				Port:     uint16(instance.GetPort()),
-				Target:   instance.GetHost() + resolver.Quota,
-			}
-		default:
-			rr = &dns.AAAA{
-				Hdr:  dns.RR_Header{Name: qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
-				AAAA: address,
-			}
-		}
-
+		ins := instances[i]
+		rr := r.markRecord(question, net.ParseIP(ins.GetHost()), ins)
 		msg.Answer = append(msg.Answer, rr)
 	}
 
@@ -168,4 +147,66 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 
 	msg = resolver.TrimDNSResponse(ctx, msg)
 	return msg
+}
+
+func (r *resolverDiscovery) lookupFromPolaris(question dns.Question) ([]model.Instance, error) {
+	svcKey, err := resolver.ParseQname(question.Qtype, question.Name, r.suffix)
+	if nil != err {
+		log.Errorf("[discovery] invalid qname %s, err: %v", &question, err)
+		return nil, nil
+	}
+	if nil == svcKey {
+		return nil, nil
+	}
+	request := &polaris.GetOneInstanceRequest{}
+	request.Namespace = svcKey.Namespace
+	request.Service = svcKey.Service
+	if len(r.config.RouteLabels) > 0 {
+		request.SourceService = &model.ServiceInfo{Metadata: r.config.RouteLabels}
+	}
+	resp, err := r.consumer.GetOneInstance(request)
+	if nil != err {
+		log.Errorf("[discovery] fail to lookup service %s, err: %v", *svcKey, err)
+		return nil, nil
+	}
+
+	return resp.GetInstances(), nil
+}
+
+func encodeIPAsFqdn(ip net.IP, svcKey model.ServiceKey) string {
+	respDomain := fmt.Sprintf("%s._addr.%s.%s", hex.EncodeToString(ip), svcKey.Service, svcKey.Namespace)
+	return dns.Fqdn(respDomain)
+}
+
+func (r *resolverDiscovery) markRecord(question dns.Question, address net.IP, ins model.Instance) dns.RR {
+
+	var rr dns.RR
+
+	qname := question.Name
+
+	switch question.Qtype {
+	case dns.TypeA:
+		rr = &dns.A{
+			Hdr: dns.RR_Header{Name: qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+			A:   address,
+		}
+	case dns.TypeSRV:
+		if ins == nil {
+			return rr
+		}
+
+		rr = &dns.SRV{
+			Hdr:      dns.RR_Header{Name: qname, Rrtype: dns.TypeSRV, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+			Priority: uint16(ins.GetPriority()),
+			Weight:   uint16(ins.GetWeight()),
+			Port:     uint16(ins.GetPort()),
+			Target:   encodeIPAsFqdn(address, ins.GetInstanceKey().ServiceKey),
+		}
+	case dns.TypeAAAA:
+		rr = &dns.AAAA{
+			Hdr:  dns.RR_Header{Name: qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: uint32(r.dnsTtl)},
+			AAAA: address,
+		}
+	}
+	return rr
 }

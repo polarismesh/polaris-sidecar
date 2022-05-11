@@ -19,6 +19,9 @@ resolvers:
     dns_ttl: 10
     enable: true
     suffix: "."
+    # option:
+    #   route_labels:
+    #     key: value
   - name: meshproxy
     dns_ttl: 120
     enable: false
