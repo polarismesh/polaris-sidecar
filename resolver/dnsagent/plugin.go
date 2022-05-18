@@ -145,7 +145,6 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 	msg.Authoritative = true
 	msg.Rcode = dns.RcodeSuccess
 
-	msg = resolver.TrimDNSResponse(ctx, msg)
 	return msg
 }
 

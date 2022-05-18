@@ -18,11 +18,9 @@
 package resolver
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/miekg/dns"
 	"github.com/polarismesh/polaris-go/pkg/config"
 
 	"github.com/polarismesh/polaris-go/pkg/model"
@@ -31,14 +29,6 @@ import (
 const (
 	Quota        = "."
 	sysNamespace = "polaris"
-)
-
-const (
-	defaultUDPHeaderSize = 12
-	defaultUDPMaxSize    = 512
-
-	defaultTCPHeaderSize = 60
-	defaultTCPMaxSize    = 65535
 )
 
 var (
@@ -80,76 +70,4 @@ func MatchSuffix(qname string, suffix string) (string, bool) {
 		return qname, true
 	}
 	return qname, true
-}
-
-// TrimDNSResponse
-func TrimDNSResponse(ctx context.Context, resp *dns.Msg) *dns.Msg {
-
-	if len(resp.Answer) < 2 {
-		return resp
-	}
-
-	if isUdp(ctx) {
-		return trimUDPResponse(resp)
-	}
-
-	return trimTCPResponse(resp)
-}
-
-// trimTCPResponse
-func trimTCPResponse(resp *dns.Msg) *dns.Msg {
-	respSize := resp.Len()
-
-	if respSize+defaultTCPHeaderSize > defaultTCPMaxSize {
-		p := binaryTruncate(resp, defaultTCPMaxSize-defaultTCPHeaderSize)
-		resp.Answer = resp.Answer[:p]
-	}
-
-	return resp
-}
-
-func isUdp(ctx context.Context) bool {
-	protocolVal := ctx.Value(ContextProtocol)
-	if protocolVal == nil {
-		return false
-	}
-
-	protocolStr, ok := protocolVal.(string)
-	if !ok {
-		return false
-	}
-
-	return strings.Compare("udp", strings.ToLower(protocolStr)) == 0
-}
-
-// trimUDPResponse UDP 协议携带的消息不应该超过 512 字节，超过的消息会被截断并设置 DNS 协议的 TC 位
-func trimUDPResponse(resp *dns.Msg) *dns.Msg {
-	respSize := resp.Len()
-
-	if respSize+defaultUDPMaxSize > defaultUDPMaxSize {
-		p := binaryTruncate(resp, defaultUDPMaxSize-defaultUDPHeaderSize)
-		resp.Answer = resp.Answer[:p]
-	}
-
-	return resp
-}
-
-func binaryTruncate(resp *dns.Msg, maxSize int) int {
-	originalAnswser := resp.Answer
-	startIndex := 0
-	endIndex := len(resp.Answer) + 1
-	for endIndex-startIndex > 1 {
-		median := startIndex + (endIndex-startIndex)/2
-		resp.Answer = originalAnswser[:median]
-		aLen := resp.Len()
-		if aLen <= maxSize {
-			if maxSize-aLen < defaultUDPHeaderSize {
-				return median
-			}
-			startIndex = median
-		} else {
-			endIndex = median
-		}
-	}
-	return startIndex
 }
