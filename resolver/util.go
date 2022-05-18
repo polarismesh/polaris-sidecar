@@ -19,8 +19,9 @@ package resolver
 
 import (
 	"fmt"
-	"github.com/polarismesh/polaris-go/pkg/config"
 	"strings"
+
+	"github.com/polarismesh/polaris-go/pkg/config"
 
 	"github.com/polarismesh/polaris-go/pkg/model"
 )
@@ -30,9 +31,13 @@ const (
 	sysNamespace = "polaris"
 )
 
+var (
+	ContextProtocol = struct{}{}
+)
+
 // ParseQname parse the qname into service and suffix
 // qname format: <service>.<namespace>.<suffix>
-func ParseQname(qname string, suffix string) (*model.ServiceKey, error) {
+func ParseQname(qType uint16, qname string, suffix string) (*model.ServiceKey, error) {
 	var matched bool
 	qname, matched = MatchSuffix(qname, suffix)
 	if !matched {

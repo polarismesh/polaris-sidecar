@@ -30,7 +30,7 @@ import (
 
 const (
 	XdsClusterDirectionOut = "out"
-	XdsClusterDirectionIn = "in"
+	XdsClusterDirectionIn  = "in"
 )
 
 type clusterConfig struct {

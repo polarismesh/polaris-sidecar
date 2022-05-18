@@ -88,7 +88,7 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	question := req.Question[0]
 	question.Name = d.preprocess(question.Name)
 
-	var ctx = context.Background()
+	ctx := context.WithValue(context.Background(), resolver.ContextProtocol, d.protocol)
 	var resp *dns.Msg
 	for _, handler := range d.resolvers {
 		resp = handler.ServeDNS(ctx, question)
