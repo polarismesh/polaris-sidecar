@@ -134,6 +134,9 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question)
 	if err != nil {
 		return nil
 	}
+	if instances == nil {
+		return nil
+	}
 
 	//do reorder and unique
 	for i := range instances {
@@ -166,7 +169,7 @@ func (r *resolverDiscovery) lookupFromPolaris(question dns.Question) ([]model.In
 	resp, err := r.consumer.GetOneInstance(request)
 	if nil != err {
 		log.Errorf("[discovery] fail to lookup service %s, err: %v", *svcKey, err)
-		return nil, nil
+		return nil, err
 	}
 
 	return resp.GetInstances(), nil
