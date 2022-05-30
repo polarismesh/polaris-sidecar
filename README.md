@@ -1,5 +1,7 @@
 # Polaris Sidecar
 
+English | [中文](./README-zh.md)
+
 ## Introduce
 
 Polaris-Sidecar as Polaris's local bike agent, providing two optional functional modes：
@@ -20,6 +22,11 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 - DNS-based service discovery capabilities: Directly pass the domain name ```<service>.<Namespace>``` to pull the service instance address list.
 - Fault nodes eliminate the ability: automatically eliminate unhealthy and isolation instances to ensure business reliability. 
 - Label Routing Ability: By configuring tags, filtering and returning a list of service instance addresses that meet label rules.
+
+### Supported DNS question type
+
+- A/AAAA
+- SRV
 
 ### Installation Notes
 

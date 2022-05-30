@@ -1,5 +1,7 @@
 # Polaris Sidecar
 
+[English](./README.md) | 中文
+
 ## 介绍
 
 polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能模式：
@@ -20,6 +22,11 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 - 基于DNS的服务发现能力：直接通过域名```<service>.<namespace>```进行拉取服务实例地址列表。
 - 故障节点剔除能力：自动剔除不健康和隔离实例，保障业务可靠性。
 - 标签路由能力：通过配置标签，通过标签筛选并返回满足标签规则的服务实例地址列表。
+
+### 当前支持的DNS请求类型
+
+- A/AAAA
+- SRV
 
 ### 安装说明
 
