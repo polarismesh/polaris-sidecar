@@ -92,7 +92,7 @@ func parseResolvConf(bindLocalhost bool) ([]string, []string) {
 	var nameservers []string
 	if dnsConfig != nil {
 		for _, search := range dnsConfig.Search {
-			searchNames = append(searchNames, search + ".")
+			searchNames = append(searchNames, search+".")
 		}
 
 		for _, server := range dnsConfig.Servers {

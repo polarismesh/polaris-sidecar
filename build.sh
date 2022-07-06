@@ -41,6 +41,9 @@ build_date=$(date "+%Y%m%d.%H%M%S")
 package="github.com/polarismesh/polaris-sidecar/version"
 go build -o ${bin_name} -ldflags="-X ${package}.Version=${version} -X ${package}.BuildDate=${build_date}"
 
+# 设置程序为可执行
+chmod +x ${bin_name}
+
 # 打包
 mkdir -p ${folder_name}
 cp ${bin_name} ${folder_name}

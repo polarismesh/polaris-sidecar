@@ -8,6 +8,6 @@ spec:
       containers:
         - name: dns
           image: anubhavmishra/tiny-tools
-          command: ['dig', 'polaris.checker.polaris.svc.polaris']
+          command: ['dig', 'polaris.checker.polaris']
       restartPolicy: Never
   backoffLimit: 4

@@ -88,7 +88,7 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	question := req.Question[0]
 	question.Name = d.preprocess(question.Name)
 
-	var ctx = context.Background()
+	ctx := context.WithValue(context.Background(), resolver.ContextProtocol, d.protocol)
 	var resp *dns.Msg
 	for _, handler := range d.resolvers {
 		resp = handler.ServeDNS(ctx, question)
@@ -124,14 +124,14 @@ func (d *dnsHandler) handleRecurse(resp dns.ResponseWriter, req *dns.Msg) {
 			r, rtt, err = c.Exchange(req, recursor)
 			// Check if the response is valid and has the desired Response code
 			if r != nil && (r.Rcode != dns.RcodeSuccess && r.Rcode != dns.RcodeNameError) {
-				log.Debugf("[agent] recurse failed for question, question: %s, rtt: %s, recursor: %s, rcode: %s",
+				log.Warnf("[agent] recurse failed for question, question: %s, rtt: %s, recursor: %s, rcode: %s",
 					q.String(), rtt, recursor, dns.RcodeToString[r.Rcode])
 				// If we still have recursors to forward the query to,
 				// we move forward onto the next one else the loop ends
 				continue
 			} else if err == nil || (r != nil && r.Truncated) {
 				// Forward the response
-				log.Debugf("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s",
+				log.Infof("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s",
 					q.String(), rtt, recursor)
 				if err := resp.WriteMsg(r); err != nil {
 					log.Warnf("failed to respond, error: %v", err)
