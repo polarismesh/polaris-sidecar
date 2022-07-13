@@ -233,7 +233,8 @@ func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig,
 		if nil != err {
 			return nil, errors.New(fmt.Sprintf("read file %s error", configFile))
 		}
-		decoder := yaml.NewDecoder(bytes.NewBuffer(buf))
+		content := string(buf)
+		decoder := yaml.NewDecoder(bytes.NewBufferString(replaceEnv(content)))
 		if err = decoder.Decode(sidecarConfig); nil != err {
 			return nil, errors.New(fmt.Sprintf("parse yaml %s error:%s", configFile, err.Error()))
 		}
@@ -243,4 +244,9 @@ func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig,
 		return nil, err
 	}
 	return sidecarConfig, sidecarConfig.verify()
+}
+
+// replaceEnv replace holder by env list
+func replaceEnv(configContent string) string {
+	return os.ExpandEnv(configContent)
 }
