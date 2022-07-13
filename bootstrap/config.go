@@ -234,16 +234,26 @@ func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig,
 			return nil, errors.New(fmt.Sprintf("read file %s error", configFile))
 		}
 		content := string(buf)
-		decoder := yaml.NewDecoder(bytes.NewBufferString(replaceEnv(content)))
-		if err = decoder.Decode(sidecarConfig); nil != err {
-			return nil, errors.New(fmt.Sprintf("parse yaml %s error:%s", configFile, err.Error()))
+		err = parseYamlContent(content, sidecarConfig)
+		if nil != err {
+			return nil, err
 		}
+	} else {
+		log.Warnf("[agent] config file %s not exists, use default sidecar config", configFile)
 	}
 	err := sidecarConfig.merge(bootConfig)
 	if nil != err {
 		return nil, err
 	}
 	return sidecarConfig, sidecarConfig.verify()
+}
+
+func parseYamlContent(content string, sidecarConfig *SidecarConfig) error {
+	decoder := yaml.NewDecoder(bytes.NewBufferString(replaceEnv(content)))
+	if err := decoder.Decode(sidecarConfig); nil != err {
+		return errors.New(fmt.Sprintf("parse yaml %s error:%s", content, err.Error()))
+	}
+	return nil
 }
 
 // replaceEnv replace holder by env list
