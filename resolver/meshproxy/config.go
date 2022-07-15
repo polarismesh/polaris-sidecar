@@ -27,6 +27,7 @@ type resolverConfig struct {
 	RegistryPort      int    `json:"registry_port"`
 	ReloadIntervalSec int    `json:"reload_interval_sec"`
 	DNSAnswerIp       string `json:"dns_answer_ip"`
+	FilterByBusiness  string `json:"filter_by_business"`
 }
 
 func parseOptions(options map[string]interface{}) (*resolverConfig, error) {

@@ -19,6 +19,7 @@ package meshproxy
 
 import (
 	"context"
+	"github.com/polarismesh/polaris-go"
 	"reflect"
 	"sort"
 	"time"
@@ -36,6 +37,7 @@ type resolverMesh struct {
 	config         *resolverConfig
 	registry       registry
 	suffix         string
+	consumer       polaris.ConsumerAPI
 }
 
 // Name will return the name to resolver
@@ -50,7 +52,11 @@ func (r *resolverMesh) Initialize(c *resolver.ConfigEntry) error {
 	if nil != err {
 		return err
 	}
-	r.registry, err = newRegistry(r.config)
+	r.consumer, err = polaris.NewConsumerAPI()
+	if nil != err {
+		return err
+	}
+	r.registry, err = newRegistry(r.config, r.consumer, r.config.FilterByBusiness)
 	if err != nil {
 		return err
 	}
