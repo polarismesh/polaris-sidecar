@@ -18,101 +18,51 @@
 package meshproxy
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-
+	"github.com/polarismesh/polaris-go"
 	"github.com/polarismesh/polaris-sidecar/log"
 )
-
-const (
-	XdsClusterDirectionOut = "out"
-	XdsClusterDirectionIn  = "in"
-)
-
-type clusterConfig struct {
-	Configs []config `json:"configs"`
-}
-
-type config struct {
-	Cluster cluster `json:"cluster"`
-}
-
-type cluster struct {
-	Name string `json:"name"`
-}
 
 type registry interface {
 	GetCurrentNsService() ([]string, error)
 }
 
-func newRegistry(conf *resolverConfig) (registry, error) {
+func newRegistry(conf *resolverConfig, consumer polaris.ConsumerAPI, business string) (registry, error) {
 	r := &envoyRegistry{
-		conf: conf,
+		conf:     conf,
+		consumer: consumer,
+		business: business,
 	}
 	return r, nil
 }
 
 type envoyRegistry struct {
-	conf *resolverConfig
+	conf     *resolverConfig
+	consumer polaris.ConsumerAPI
+	business string
 }
 
 func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
-
-	var req *http.Request
-	var resp *http.Response
-	var err error
-	var body []byte
-	var services []string
-	configDump := &clusterConfig{}
-
-	reqUrl := "http://" + r.conf.RegistryHost + ":" + strconv.Itoa(r.conf.RegistryPort) + "/config_dump"
-
-	if req, err = http.NewRequest(http.MethodGet, reqUrl, nil); err != nil {
-		log.Errorf("[Mesh] failed to construct request, %v", err)
+	var services map[string]struct{}
+	req := &polaris.GetServicesRequest{}
+	req.Business = r.business
+	resp, err := r.consumer.GetServices(&polaris.GetServicesRequest{})
+	if nil != err {
+		log.Errorf("[Mesh] fail to request services from polaris, %v", err)
 		return nil, err
 	}
-
-	param := req.URL.Query()
-	param.Add("resource", "dynamic_active_clusters")
-
-	req.URL.RawQuery = param.Encode()
-
-	httpClient := &http.Client{
-		Timeout: 1 * time.Second,
+	if len(resp.Value) == 0 {
+		log.Infof("[Mesh] services is empty")
+		return []string{}, nil
 	}
-
-	if resp, err = httpClient.Do(req); err != nil {
-		log.Errorf("[Mesh] fail to request envoy sidecar, %v", err)
-		return nil, err
+	services = make(map[string]struct{}, len(resp.GetValue()))
+	for _, svc := range resp.GetValue() {
+		services[svc.Service] = struct{}{}
+		services[svc.Service+"."+svc.Namespace] = struct{}{}
 	}
-
-	if body, err = ioutil.ReadAll(resp.Body); err != nil {
-		log.Errorf("[Mesh] fail to read response, %v", err)
-		return nil, err
+	values := make([]string, 0, len(services))
+	for svc := range services {
+		values = append(values, svc)
 	}
-
-	if err = json.Unmarshal(body, configDump); err != nil {
-		log.Errorf("[Mesh] fail to unmarshal envoy response, %v", err)
-		return nil, err
-	}
-
-	for _, c := range configDump.Configs {
-		serviceName := c.Cluster.Name
-		ss := strings.Split(c.Cluster.Name, "|")
-		if len(ss) > 2 {
-			// xds v2 , examples: "out|80|details"
-			if ss[0] == XdsClusterDirectionOut {
-				serviceName = ss[2]
-			} else {
-				continue
-			}
-		}
-		services = append(services, serviceName)
-	}
-
-	return services, nil
+	log.Infof("[Mesh] services lookup are %v", values)
+	return values, nil
 }

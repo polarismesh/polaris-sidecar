@@ -26,7 +26,5 @@ resolvers:
     dns_ttl: 120
     enable: false
     option:
-      registry_host: 127.0.0.1
-      registry_port: 15000
       reload_interval_sec: 2
       dns_answer_ip: 10.4.4.4
