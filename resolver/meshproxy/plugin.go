@@ -87,6 +87,7 @@ func (r *resolverMesh) Destroy() {
 func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question) *dns.Msg {
 	qname, matched := resolver.MatchSuffix(question.Name, r.suffix)
 	if !matched {
+		log.Infof("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
 		return nil
 	}
 	question.Name = qname

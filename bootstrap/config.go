@@ -91,9 +91,7 @@ func defaultSidecarConfig() *SidecarConfig {
 				DnsTtl: 120,
 				Enable: false,
 				Option: map[string]interface{}{
-					"registry_host":       "127.0.0.1",
-					"registry_port":       15000,
-					"reload_interval_sec": 2,
+					"reload_interval_sec": 30,
 					"dns_answer_ip":       "10.4.4.4",
 				},
 			},
