@@ -22,7 +22,7 @@ docker build --network=host -t polarismesh/polaris-sidecar:${docker_tag} ./
 docker push polarismesh/polaris-sidecar:${docker_tag}
 
 pre_release=`echo ${docker_tag}|egrep "(alpha|beta|rc)"|wc -l`
-if [ ${pre_release} == 1 ]; then
+if [ ${pre_release} == 0 ]; then
   docker tag polarismesh/polaris-sidecar:${docker_tag} polarismesh/polaris-sidecar:latest
   docker push polarismesh/polaris-sidecar:latest
 fi
