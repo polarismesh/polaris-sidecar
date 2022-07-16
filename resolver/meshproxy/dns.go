@@ -49,7 +49,8 @@ func (h *LocalDNSServer) UpdateLookupTable(polarisServices []string, dnsResponse
 		lookupTable.buildDNSAnswers(altHosts, []net.IP{net.ParseIP(dnsResponseIp)}, nil)
 	}
 	h.lookupTable.Store(lookupTable)
-	log.Infof("[mesh] updated lookup table with %d hosts", len(lookupTable.allHosts))
+	log.Infof("[mesh] updated lookup table with %d hosts, allHosts are %v",
+		len(lookupTable.allHosts), lookupTable.allHosts)
 }
 
 type LookupTable struct {
@@ -150,6 +151,8 @@ func (h *LocalDNSServer) ServeDNS(ctx context.Context, question *dns.Question) *
 		response.Answer = answers
 		response.Rcode = dns.RcodeSuccess
 		return response
+	} else {
+		log.Infof("[Mesh] host not found for name %s", hostname)
 	}
 	return nil
 }
