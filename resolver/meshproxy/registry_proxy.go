@@ -23,7 +23,7 @@ import (
 )
 
 type registry interface {
-	GetCurrentNsService() ([]string, error)
+	GetCurrentNsService() (map[string]struct{}, error)
 }
 
 func newRegistry(conf *resolverConfig, consumer polaris.ConsumerAPI, business string) (registry, error) {
@@ -41,7 +41,7 @@ type envoyRegistry struct {
 	business string
 }
 
-func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
+func (r *envoyRegistry) GetCurrentNsService() (map[string]struct{}, error) {
 	var services map[string]struct{}
 	req := &polaris.GetServicesRequest{}
 	req.Business = r.business
@@ -52,17 +52,12 @@ func (r *envoyRegistry) GetCurrentNsService() ([]string, error) {
 	}
 	if len(resp.Value) == 0 {
 		log.Infof("[Mesh] services is empty")
-		return []string{}, nil
+		return services, nil
 	}
 	services = make(map[string]struct{}, len(resp.GetValue()))
 	for _, svc := range resp.GetValue() {
 		services[svc.Service] = struct{}{}
 		services[svc.Service+"."+svc.Namespace] = struct{}{}
 	}
-	values := make([]string, 0, len(services))
-	for svc := range services {
-		values = append(values, svc)
-	}
-	log.Infof("[Mesh] services lookup are %v", values)
-	return values, nil
+	return services, nil
 }

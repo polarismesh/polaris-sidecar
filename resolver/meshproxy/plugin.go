@@ -20,8 +20,6 @@ package meshproxy
 import (
 	"context"
 	"github.com/polarismesh/polaris-go"
-	"reflect"
-	"sort"
 	"time"
 
 	"github.com/miekg/dns"
@@ -100,7 +98,7 @@ func (r *resolverMesh) Start(ctx context.Context) {
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
-		var currentServices []string
+		var currentServices map[string]struct{}
 		for {
 			select {
 			case <-ticker.C:
@@ -109,8 +107,8 @@ func (r *resolverMesh) Start(ctx context.Context) {
 					log.Errorf("[mesh] error to get services, err: %v", err)
 					continue
 				}
-				sort.Strings(services)
 				if ifServiceListChanged(currentServices, services) {
+					log.Infof("[Mesh] services lookup are %v", services)
 					r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
 					currentServices = services
 				}
@@ -121,11 +119,19 @@ func (r *resolverMesh) Start(ctx context.Context) {
 	}()
 }
 
-func ifServiceListChanged(currentServices, newNsServices []string) bool {
-	if reflect.DeepEqual(currentServices, newNsServices) {
+func ifServiceListChanged(currentServices, newNsServices map[string]struct{}) bool {
+	if len(currentServices) != len(newNsServices) {
+		return true
+	}
+	if len(currentServices) == 0 {
 		return false
 	}
-	return true
+	for svc := range currentServices {
+		if _, ok := newNsServices[svc]; !ok {
+			return true
+		}
+	}
+	return false
 }
 
 func init() {

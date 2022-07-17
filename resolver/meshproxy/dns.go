@@ -34,7 +34,7 @@ type LocalDNSServer struct {
 	dnsTtl      uint32
 }
 
-func (h *LocalDNSServer) UpdateLookupTable(polarisServices []string, dnsResponseIp string) {
+func (h *LocalDNSServer) UpdateLookupTable(polarisServices map[string]struct{}, dnsResponseIp string) {
 	lookupTable := &LookupTable{
 		allHosts: map[string]struct{}{},
 		name4:    map[string][]dns.RR{},
@@ -44,7 +44,7 @@ func (h *LocalDNSServer) UpdateLookupTable(polarisServices []string, dnsResponse
 	}
 
 	var altHosts map[string]struct{}
-	for _, service := range polarisServices {
+	for service := range polarisServices {
 		altHosts = map[string]struct{}{service + ".": {}}
 		lookupTable.buildDNSAnswers(altHosts, []net.IP{net.ParseIP(dnsResponseIp)}, nil)
 	}
