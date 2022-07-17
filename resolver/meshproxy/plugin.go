@@ -121,14 +121,17 @@ func (r *resolverMesh) Start(ctx context.Context) {
 
 func ifServiceListChanged(currentServices, newNsServices map[string]struct{}) bool {
 	if len(currentServices) != len(newNsServices) {
+		return true
+	}
+	if len(currentServices) == 0 {
 		return false
 	}
 	for svc := range currentServices {
 		if _, ok := newNsServices[svc]; !ok {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func init() {
