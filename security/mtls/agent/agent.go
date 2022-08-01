@@ -33,7 +33,7 @@ func New(opt Option) (*Agent, error) {
 	a.network = opt.Network
 	a.addr = opt.Address
 	a.rotator = rotator.New(opt.RotatePeriod, opt.FailedRetryDelay)
-	a.sds = sds.New(time.Microsecond * 10)
+	a.sds = sds.New(time.Millisecond)
 
 	cli, err := caclient.NewWithRootCA(opt.CAServer, caclient.ServiceAccountToken(), defaultCAPath)
 	if err != nil {
