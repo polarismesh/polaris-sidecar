@@ -4,6 +4,7 @@ RUN apk update \
     && apk add --no-cache bash \
     && apk add curl \
     && apk add iptables \
+    && apk add tcpdump \
     && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo "Asia/Shanghai" > /etc/timezone
 

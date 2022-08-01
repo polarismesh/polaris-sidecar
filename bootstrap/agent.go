@@ -29,6 +29,7 @@ import (
 
 	"github.com/polarismesh/polaris-sidecar/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
+	mtlsAgent "github.com/polarismesh/polaris-sidecar/security/mtls/agent"
 )
 
 // Agent provide the listener to dns server
@@ -37,6 +38,7 @@ type Agent struct {
 	resolvers []resolver.NamingResolver
 	tcpServer *dns.Server
 	udpServer *dns.Server
+	mtlsAgent *mtlsAgent.Agent
 }
 
 // Start the main agent routines
@@ -152,7 +154,8 @@ func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 		recurseAddresses = append(recurseAddresses, fmt.Sprintf("%s:53", nameserver))
 	}
 	polarisAgent.udpServer = &dns.Server{
-		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "udp"}
+		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "udp",
+	}
 	polarisAgent.udpServer.Handler = &dnsHandler{
 		protocol:        "udp",
 		resolvers:       polarisAgent.resolvers,
@@ -162,7 +165,8 @@ func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 		recurseEnable:   polarisAgent.config.Recurse.Enable,
 	}
 	polarisAgent.tcpServer = &dns.Server{
-		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "tcp"}
+		Addr: polarisAgent.config.Bind + ":" + strconv.Itoa(polarisAgent.config.Port), Net: "tcp",
+	}
 	polarisAgent.tcpServer.Handler = &dnsHandler{
 		protocol:        "tcp",
 		resolvers:       polarisAgent.resolvers,
@@ -170,6 +174,16 @@ func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 		recursorTimeout: time.Duration(polarisAgent.config.Recurse.TimeoutSec) * time.Second,
 		recursors:       recurseAddresses,
 		recurseEnable:   polarisAgent.config.Recurse.Enable,
+	}
+	if polarisAgent.config.MTLS != nil {
+		log.Info("create mtls agent")
+		agent, err := mtlsAgent.New(mtlsAgent.Option{
+			CAServer: polarisAgent.config.MTLS.CAServer,
+		})
+		if err != nil {
+			return nil, err
+		}
+		polarisAgent.mtlsAgent = agent
 	}
 	return polarisAgent, nil
 }
@@ -193,6 +207,16 @@ func (p *Agent) Start(ctx context.Context) error {
 			handler.Destroy()
 		}
 	}()
+
+	if p.mtlsAgent != nil {
+		mCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		go func() {
+			log.Info("start mtls agent")
+			errChan <- p.mtlsAgent.Run(mCtx)
+		}()
+	}
+
 	for {
 		select {
 		case err := <-errChan:

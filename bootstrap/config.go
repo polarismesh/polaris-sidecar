@@ -29,12 +29,15 @@ type BootConfig struct {
 	ResolverDnsAgentEnabled     string
 	ResolverDnsAgentRouteLabels string
 	ResolverMeshProxyEnabled    string
+	MTLSEnabled                 bool
+	CAServer                    string
 }
 
 // SidecarConfig global sidecar config struct
 type SidecarConfig struct {
 	Bind      string                  `yaml:"bind"`
 	Port      int                     `yaml:"port"`
+	MTLS      *MTLSConfiguration      `yaml:"mtls"`
 	Recurse   *RecurseConfig          `yaml:"recurse"`
 	Logger    *log.Options            `yaml:"logger"`
 	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
@@ -210,6 +213,12 @@ func (s *SidecarConfig) merge(config *BootConfig) error {
 					}
 				}
 			}
+		}
+	}
+
+	if config.MTLSEnabled {
+		s.MTLS = &MTLSConfiguration{
+			CAServer: config.CAServer,
 		}
 	}
 	return errs.ErrorOrNil()
