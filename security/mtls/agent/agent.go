@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"net"
-	"time"
 
 	"github.com/polarismesh/polaris-sidecar/log"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate/caclient"
@@ -33,7 +32,7 @@ func New(opt Option) (*Agent, error) {
 	a.network = opt.Network
 	a.addr = opt.Address
 	a.rotator = rotator.New(opt.RotatePeriod, opt.FailedRetryDelay)
-	a.sds = sds.New(time.Millisecond)
+	a.sds = sds.New(opt.CryptombPollDelay)
 
 	cli, err := caclient.NewWithRootCA(opt.CAServer, caclient.ServiceAccountToken(), defaultCAPath)
 	if err != nil {

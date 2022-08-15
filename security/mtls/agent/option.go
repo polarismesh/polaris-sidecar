@@ -82,7 +82,7 @@ func (opt *Option) init() error {
 
 	opt.CryptombPollDelay = EnvDefaultDuration("POLARIS_SIDECAR_MTLS_CRYPTO_MB_POLL_DELAY",
 		opt.CryptombPollDelay,
-		time.Microsecond*200)
+		time.Millisecond)
 
 	opt.RotatePeriod = EnvDefaultDuration("POLARIS_SIDECAR_MTLS_ROTATE_PERIOD",
 		opt.RotatePeriod,
