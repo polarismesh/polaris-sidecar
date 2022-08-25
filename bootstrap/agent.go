@@ -40,8 +40,8 @@ type Agent struct {
 }
 
 // Start the main agent routines
-func Start(configFile string, bootConfig *BootConfig) {
-	agent, err := newAgent(configFile, bootConfig)
+func Start(configFile string) {
+	agent, err := newAgent(configFile)
 	if err != nil {
 		fmt.Printf("[ERROR] loadConfig fail: %v\n", err)
 		os.Exit(-1)
@@ -105,10 +105,10 @@ func parseResolvConf(bindLocalhost bool) ([]string, []string) {
 	return nameservers, searchNames
 }
 
-func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
+func newAgent(configFile string) (*Agent, error) {
 	var err error
 	polarisAgent := &Agent{}
-	polarisAgent.config, err = parseYamlConfig(configFile, bootConfig)
+	polarisAgent.config, err = parseYamlConfig(configFile)
 	if nil != err {
 		log.Errorf("[agent] fail to parse sidecar config, err: %v", err)
 		return nil, err

@@ -86,12 +86,12 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	}
 	// questions type we only accept
 	question := req.Question[0]
-	question.Name = d.preprocess(question.Name)
-
+	qname := d.preprocess(question.Name)
+	log.Infof("[agent] input question name %s, after preprocess name %s", question.Name, qname)
 	ctx := context.WithValue(context.Background(), resolver.ContextProtocol, d.protocol)
 	var resp *dns.Msg
 	for _, handler := range d.resolvers {
-		resp = handler.ServeDNS(ctx, question)
+		resp = handler.ServeDNS(ctx, question, qname)
 		if nil != resp {
 			d.sendDnsResponse(w, req, resp)
 			return

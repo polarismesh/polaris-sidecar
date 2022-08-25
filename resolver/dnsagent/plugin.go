@@ -108,14 +108,12 @@ func canDoResolve(qType uint16) bool {
 // * REFUSED (dns.RecodeRefused)
 //
 // * NOTIMP (dns.RcodeNotImplemented)
-func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question) *dns.Msg {
+func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question, qname string) *dns.Msg {
 	if !canDoResolve(question.Qtype) {
 		return nil
 	}
 
 	msg := &dns.Msg{}
-	qname := question.Name
-
 	labels := dns.SplitDomainName(qname)
 	for i := range labels {
 		if labels[i] == "_addr" {
@@ -163,8 +161,8 @@ func (r *resolverDiscovery) lookupFromPolaris(question dns.Question) ([]model.In
 	request := &polaris.GetOneInstanceRequest{}
 	request.Namespace = svcKey.Namespace
 	request.Service = svcKey.Service
-	if len(r.config.RouteLabels) > 0 {
-		request.SourceService = &model.ServiceInfo{Metadata: r.config.RouteLabels}
+	if len(r.config.RouteLabelsMap) > 0 {
+		request.SourceService = &model.ServiceInfo{Metadata: r.config.RouteLabelsMap}
 	}
 	resp, err := r.consumer.GetOneInstance(request)
 	if nil != err {

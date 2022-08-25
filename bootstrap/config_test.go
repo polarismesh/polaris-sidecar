@@ -30,7 +30,10 @@ func TestParseLabels(t *testing.T) {
 	fmt.Printf("values are %v\n", values)
 }
 
-const testCfg = "resolvers:\n  " +
+const testCfg = "" +
+	"bind: ${SIDECAR_BIND}\n" +
+	"port: ${SIDECAR_PORT}\n" +
+	"resolvers:\n  " +
 	"- name: dnsagent\n    " +
 	"dns_ttl: 10\n    " +
 	"enable: true\n    " +
@@ -40,7 +43,7 @@ const testCfg = "resolvers:\n  " +
 	"enable: false\n    " +
 	"option:\n      " +
 	"registry_host: 127.0.0.1\n      " +
-	"registry_port: 15000\n      " +
+	"registry_port: ${LISTEN_PORT}\n      " +
 	"reload_interval_sec: 2\n      " +
 	"dns_answer_ip: ${aswip}"
 
@@ -60,5 +63,17 @@ func TestParseYamlConfig(t *testing.T) {
 	if result != testAnswerIP {
 		t.Fatal("answer ip should be " + testAnswerIP)
 	}
+
+}
+
+const value = "this is a ${animal}, today is ${today}"
+
+func TestReplaceEnv(t *testing.T) {
+	err := os.Setenv("animal", "cat")
+	if nil != err {
+		t.Fatal(err)
+	}
+	nextValue := os.ExpandEnv(value)
+	fmt.Println("nextValue is " + nextValue)
 
 }

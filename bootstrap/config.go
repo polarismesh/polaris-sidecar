@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -18,18 +17,7 @@ import (
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
-const defaultSvcSuffix = "svc.polaris"
-
-// BootConfig simple config for bootstrap
-type BootConfig struct {
-	Bind                        string
-	Port                        int
-	LogLevel                    string
-	RecurseEnabled              string
-	ResolverDnsAgentEnabled     string
-	ResolverDnsAgentRouteLabels string
-	ResolverMeshProxyEnabled    string
-}
+const defaultSvcSuffix = "."
 
 // SidecarConfig global sidecar config struct
 type SidecarConfig struct {
@@ -160,59 +148,43 @@ func parseLabels(labels string) map[string]string {
 	return values
 }
 
-func (s *SidecarConfig) merge(config *BootConfig) error {
-	var errs multierror.Error
-	var err error
-	if len(config.Bind) > 0 {
-		s.Bind = config.Bind
-	}
-	if config.Port > 0 {
-		s.Port = config.Port
-	}
-	if len(config.LogLevel) > 0 {
-		s.Logger.OutputLevel = config.LogLevel
-	}
-	if len(config.RecurseEnabled) > 0 {
-		s.Recurse.Enable, err = strconv.ParseBool(config.RecurseEnabled)
-		if nil != err {
-			errs.Errors = append(errs.Errors,
-				fmt.Errorf("fail to parse recurse-enabled value to boolean, err: %v", err))
-		}
-	}
-	s.Logger.OutputLevel = config.LogLevel
-	if len(config.ResolverDnsAgentEnabled) > 0 || len(config.ResolverDnsAgentRouteLabels) > 0 {
-		for _, resolverConfig := range s.Resolvers {
-			if resolverConfig.Name == resolver.PluginNameDnsAgent {
-				if len(config.ResolverDnsAgentEnabled) > 0 {
-					resolverConfig.Enable, err = strconv.ParseBool(config.ResolverDnsAgentEnabled)
-					if nil != err {
-						errs.Errors = append(errs.Errors,
-							fmt.Errorf("fail to parse resolver-dnsAgent-enabled value to boolean, err: %v", err))
-					}
+func (s *SidecarConfig) mergeEnv() {
+	s.Bind = getEnvStringValue(EnvSidecarBind, s.Bind)
+	s.Port = getEnvIntValue(EnvSidecarPort, s.Port)
+	s.Recurse.Enable = getEnvBoolValue(EnvSidecarRecurseEnable, s.Recurse.Enable)
+	s.Recurse.TimeoutSec = getEnvIntValue(EnvSidecarRecurseEnable, s.Recurse.TimeoutSec)
+	s.Logger.RotateOutputPath = getEnvStringValue(EnvSidecarLogRotateOutputPath, s.Logger.RotateOutputPath)
+	s.Logger.ErrorRotateOutputPath = getEnvStringValue(EnvSidecarLogErrorRotateOutputPath, s.Logger.ErrorRotateOutputPath)
+	s.Logger.RotationMaxSize = getEnvIntValue(EnvSidecarLogRotationMaxSize, s.Logger.RotationMaxSize)
+	s.Logger.RotationMaxBackups = getEnvIntValue(EnvSidecarLogRotationMaxBackups, s.Logger.RotationMaxBackups)
+	s.Logger.RotationMaxAge = getEnvIntValue(EnvSidecarLogRotationMaxAge, s.Logger.RotationMaxAge)
+	s.Logger.OutputLevel = getEnvStringValue(EnvSidecarLogLevel, s.Logger.OutputLevel)
+	if len(s.Resolvers) > 0 {
+		for _, resolverConf := range s.Resolvers {
+			if resolverConf.Name == resolver.PluginNameDnsAgent {
+				resolverConf.DnsTtl = getEnvIntValue(EnvSidecarDnsTtl, resolverConf.DnsTtl)
+				resolverConf.Enable = getEnvBoolValue(EnvSidecarDnsEnable, resolverConf.Enable)
+				resolverConf.Suffix = getEnvStringValue(EnvSidecarDnsSuffix, resolverConf.Suffix)
+				routeLabels := getEnvStringValue(EnvSidecarDnsRouteLabels, "")
+				if len(routeLabels) > 0 {
+					resolverConf.Option = make(map[string]interface{})
+					resolverConf.Option["route_labels"] = routeLabels
 				}
-				if len(config.ResolverDnsAgentRouteLabels) > 0 {
-					labels := parseLabels(config.ResolverDnsAgentRouteLabels)
-					if len(labels) > 0 {
-						if len(resolverConfig.Option) == 0 {
-							resolverConfig.Option = make(map[string]interface{})
-						}
-						resolverConfig.Option["route_labels"] = labels
-					}
+			} else if resolverConf.Name == resolver.PluginNameMeshProxy {
+				resolverConf.DnsTtl = getEnvIntValue(EnvSidecarMeshTtl, resolverConf.DnsTtl)
+				resolverConf.Enable = getEnvBoolValue(EnvSidecarMeshEnable, resolverConf.Enable)
+				reloadIntervalSec := getEnvIntValue(EnvSidecarMeshReloadInterval, 0)
+				if reloadIntervalSec > 0 {
+					resolverConf.Option["reload_interval_sec"] = reloadIntervalSec
 				}
-				continue
-			}
-			if resolverConfig.Name == resolver.PluginNameMeshProxy {
-				if len(config.ResolverMeshProxyEnabled) > 0 {
-					resolverConfig.Enable, err = strconv.ParseBool(config.ResolverMeshProxyEnabled)
-					if nil != err {
-						errs.Errors = append(errs.Errors,
-							fmt.Errorf("fail to parse resolver-meshproxy-enabled value to boolean, err: %v", err))
-					}
+				dnsAnswerIP := getEnvStringValue(EnvSidecarMeshAnswerIp, "")
+				if len(dnsAnswerIP) > 0 {
+					resolverConf.Option["dns_answer_ip"] = dnsAnswerIP
 				}
 			}
 		}
+
 	}
-	return errs.ErrorOrNil()
 }
 
 func isFile(path string) bool {
@@ -224,37 +196,28 @@ func isFile(path string) bool {
 }
 
 // parseYamlConfig parse config file to object
-func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig, error) {
+func parseYamlConfig(configFile string) (*SidecarConfig, error) {
 	sidecarConfig := defaultSidecarConfig()
-	if isFile(configFile) {
+	if len(configFile) > 0 && isFile(configFile) {
 		buf, err := ioutil.ReadFile(configFile)
 		if nil != err {
 			return nil, errors.New(fmt.Sprintf("read file %s error", configFile))
 		}
-		content := string(buf)
-		err = parseYamlContent(content, sidecarConfig)
+		err = parseYamlContent(buf, sidecarConfig)
 		if nil != err {
 			return nil, err
 		}
 	} else {
 		log.Warnf("[agent] config file %s not exists, use default sidecar config", configFile)
 	}
-	err := sidecarConfig.merge(bootConfig)
-	if nil != err {
-		return nil, err
-	}
+	sidecarConfig.mergeEnv()
 	return sidecarConfig, sidecarConfig.verify()
 }
 
-func parseYamlContent(content string, sidecarConfig *SidecarConfig) error {
-	decoder := yaml.NewDecoder(bytes.NewBufferString(replaceEnv(content)))
+func parseYamlContent(content []byte, sidecarConfig *SidecarConfig) error {
+	decoder := yaml.NewDecoder(bytes.NewBuffer(content))
 	if err := decoder.Decode(sidecarConfig); nil != err {
 		return errors.New(fmt.Sprintf("parse yaml %s error:%s", content, err.Error()))
 	}
 	return nil
-}
-
-// replaceEnv replace holder by env list
-func replaceEnv(configContent string) string {
-	return os.ExpandEnv(configContent)
 }
