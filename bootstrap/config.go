@@ -23,6 +23,7 @@ const defaultSvcSuffix = "."
 type SidecarConfig struct {
 	Bind      string                  `yaml:"bind"`
 	Port      int                     `yaml:"port"`
+	MTLS      *MTLSConfiguration      `yaml:"mtls"`
 	Recurse   *RecurseConfig          `yaml:"recurse"`
 	Logger    *log.Options            `yaml:"logger"`
 	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
@@ -184,6 +185,11 @@ func (s *SidecarConfig) mergeEnv() {
 			}
 		}
 
+	}
+	if config.MTLSEnabled {
+		s.MTLS = &MTLSConfiguration{
+			CAServer: config.CAServer,
+		}
 	}
 }
 

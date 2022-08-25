@@ -19,6 +19,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 
 	"github.com/polarismesh/polaris-sidecar/bootstrap"
