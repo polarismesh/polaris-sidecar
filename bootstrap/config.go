@@ -54,6 +54,9 @@ func defaultSidecarConfig() *SidecarConfig {
 			Enable:     false,
 			TimeoutSec: 1,
 		},
+		MTLS: &MTLSConfiguration{
+			Enable: false,
+		},
 		Logger: &log.Options{
 			OutputPaths: []string{
 				"stdout",
@@ -152,8 +155,10 @@ func parseLabels(labels string) map[string]string {
 func (s *SidecarConfig) mergeEnv() {
 	s.Bind = getEnvStringValue(EnvSidecarBind, s.Bind)
 	s.Port = getEnvIntValue(EnvSidecarPort, s.Port)
+	s.MTLS.Enable = getEnvBoolValue(EnvSidecarMtlsEnable, s.MTLS.Enable)
+	s.MTLS.CAServer = getEnvStringValue(EnvSidecarMtlsCAServer, s.MTLS.CAServer)
 	s.Recurse.Enable = getEnvBoolValue(EnvSidecarRecurseEnable, s.Recurse.Enable)
-	s.Recurse.TimeoutSec = getEnvIntValue(EnvSidecarRecurseEnable, s.Recurse.TimeoutSec)
+	s.Recurse.TimeoutSec = getEnvIntValue(EnvSidecarRecurseTimeout, s.Recurse.TimeoutSec)
 	s.Logger.RotateOutputPath = getEnvStringValue(EnvSidecarLogRotateOutputPath, s.Logger.RotateOutputPath)
 	s.Logger.ErrorRotateOutputPath = getEnvStringValue(EnvSidecarLogErrorRotateOutputPath, s.Logger.ErrorRotateOutputPath)
 	s.Logger.RotationMaxSize = getEnvIntValue(EnvSidecarLogRotationMaxSize, s.Logger.RotationMaxSize)
@@ -185,11 +190,6 @@ func (s *SidecarConfig) mergeEnv() {
 			}
 		}
 
-	}
-	if config.MTLSEnabled {
-		s.MTLS = &MTLSConfiguration{
-			CAServer: config.CAServer,
-		}
 	}
 }
 

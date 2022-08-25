@@ -42,6 +42,8 @@ const (
 	EnvSidecarMeshEnable               = "SIDECAR_MESH_ENABLE"
 	EnvSidecarMeshReloadInterval       = "SIDECAR_MESH_RELOAD_INTERVAL"
 	EnvSidecarMeshAnswerIp             = "SIDECAR_MESH_ANSWER_IP"
+	EnvSidecarMtlsEnable               = "SIDECAR_MTLS_ENABLE"
+	EnvSidecarMtlsCAServer             = "SIDECAR_MTLS_CA_SERVER"
 )
 
 func getEnvStringValue(envName string, defaultValue string) string {
