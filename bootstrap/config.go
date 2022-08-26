@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -18,6 +19,17 @@ import (
 )
 
 const defaultSvcSuffix = "."
+
+// BootConfig simple config for bootstrap
+type BootConfig struct {
+	Bind                        string
+	Port                        int
+	LogLevel                    string
+	RecurseEnabled              string
+	ResolverDnsAgentEnabled     string
+	ResolverDnsAgentRouteLabels string
+	ResolverMeshProxyEnabled    string
+}
 
 // SidecarConfig global sidecar config struct
 type SidecarConfig struct {
@@ -193,6 +205,61 @@ func (s *SidecarConfig) mergeEnv() {
 	}
 }
 
+func (s *SidecarConfig) mergeBootConfig(config *BootConfig) error {
+	var errs multierror.Error
+	var err error
+	if len(config.Bind) > 0 {
+		s.Bind = config.Bind
+	}
+	if config.Port > 0 {
+		s.Port = config.Port
+	}
+	if len(config.LogLevel) > 0 {
+		s.Logger.OutputLevel = config.LogLevel
+	}
+	if len(config.RecurseEnabled) > 0 {
+		s.Recurse.Enable, err = strconv.ParseBool(config.RecurseEnabled)
+		if nil != err {
+			errs.Errors = append(errs.Errors,
+				fmt.Errorf("fail to parse recurse-enabled value to boolean, err: %v", err))
+		}
+	}
+	s.Logger.OutputLevel = config.LogLevel
+	if len(config.ResolverDnsAgentEnabled) > 0 || len(config.ResolverDnsAgentRouteLabels) > 0 {
+		for _, resolverConfig := range s.Resolvers {
+			if resolverConfig.Name == resolver.PluginNameDnsAgent {
+				if len(config.ResolverDnsAgentEnabled) > 0 {
+					resolverConfig.Enable, err = strconv.ParseBool(config.ResolverDnsAgentEnabled)
+					if nil != err {
+						errs.Errors = append(errs.Errors,
+							fmt.Errorf("fail to parse resolver-dnsAgent-enabled value to boolean, err: %v", err))
+					}
+				}
+				if len(config.ResolverDnsAgentRouteLabels) > 0 {
+					labels := parseLabels(config.ResolverDnsAgentRouteLabels)
+					if len(labels) > 0 {
+						if len(resolverConfig.Option) == 0 {
+							resolverConfig.Option = make(map[string]interface{})
+						}
+						resolverConfig.Option["route_labels"] = labels
+					}
+				}
+				continue
+			}
+			if resolverConfig.Name == resolver.PluginNameMeshProxy {
+				if len(config.ResolverMeshProxyEnabled) > 0 {
+					resolverConfig.Enable, err = strconv.ParseBool(config.ResolverMeshProxyEnabled)
+					if nil != err {
+						errs.Errors = append(errs.Errors,
+							fmt.Errorf("fail to parse resolver-meshproxy-enabled value to boolean, err: %v", err))
+					}
+				}
+			}
+		}
+	}
+	return errs.ErrorOrNil()
+}
+
 func isFile(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
@@ -202,7 +269,7 @@ func isFile(path string) bool {
 }
 
 // parseYamlConfig parse config file to object
-func parseYamlConfig(configFile string) (*SidecarConfig, error) {
+func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig, error) {
 	sidecarConfig := defaultSidecarConfig()
 	if len(configFile) > 0 && isFile(configFile) {
 		buf, err := ioutil.ReadFile(configFile)
@@ -217,6 +284,9 @@ func parseYamlConfig(configFile string) (*SidecarConfig, error) {
 		log.Warnf("[agent] config file %s not exists, use default sidecar config", configFile)
 	}
 	sidecarConfig.mergeEnv()
+	if err := sidecarConfig.mergeBootConfig(bootConfig); nil != err {
+		return nil, err
+	}
 	return sidecarConfig, sidecarConfig.verify()
 }
 
