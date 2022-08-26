@@ -3,6 +3,8 @@ port: 53
 recurse:
   enable: false
   timeoutSec: 1
+mtls:
+  enable: false
 logger:
   output_paths:
     - stdout

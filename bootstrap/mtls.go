@@ -1,5 +1,6 @@
 package bootstrap
 
 type MTLSConfiguration struct {
-	CAServer string
+	Enable   bool   `yaml:"enable"`
+	CAServer string `yaml:"ca_server"`
 }

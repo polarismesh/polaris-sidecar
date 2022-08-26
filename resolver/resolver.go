@@ -50,7 +50,7 @@ type NamingResolver interface {
 	// Destroy will destroy the resolver on shutdown
 	Destroy()
 	// ServeDNS is like dns.Handler except ServeDNS may return an response or nil
-	ServeDNS(context.Context, dns.Question) *dns.Msg
+	ServeDNS(context.Context, dns.Question, string) *dns.Msg
 }
 
 var resolvers = map[string]NamingResolver{}

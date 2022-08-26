@@ -82,13 +82,12 @@ func (r *resolverMesh) Destroy() {
 // * REFUSED (dns.RecodeRefused)
 //
 // * NOTIMP (dns.RcodeNotImplemented)
-func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question) *dns.Msg {
-	qname, matched := resolver.MatchSuffix(question.Name, r.suffix)
+func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qname string) *dns.Msg {
+	_, matched := resolver.MatchSuffix(qname, r.suffix)
 	if !matched {
 		log.Infof("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
 		return nil
 	}
-	question.Name = qname
 	return r.localDNSServer.ServeDNS(ctx, &question)
 }
 
@@ -99,24 +98,39 @@ func (r *resolverMesh) Start(ctx context.Context) {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		var currentServices map[string]struct{}
+		var nextServices map[string]struct{}
+		var changed bool
+
+		nextServices, changed = r.doReload(currentServices)
+		if changed {
+			currentServices = nextServices
+		}
 		for {
 			select {
 			case <-ticker.C:
-				services, err := r.registry.GetCurrentNsService()
-				if err != nil {
-					log.Errorf("[mesh] error to get services, err: %v", err)
-					continue
-				}
-				if ifServiceListChanged(currentServices, services) {
-					log.Infof("[Mesh] services lookup are %v", services)
-					r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
-					currentServices = services
+				nextServices, changed = r.doReload(currentServices)
+				if changed {
+					currentServices = nextServices
 				}
 			case <-ctx.Done():
 				return
 			}
 		}
 	}()
+}
+
+func (r *resolverMesh) doReload(currentServices map[string]struct{}) (map[string]struct{}, bool) {
+	services, err := r.registry.GetCurrentNsService()
+	if err != nil {
+		log.Errorf("[mesh] error to get services, err: %v", err)
+		return nil, false
+	}
+	if ifServiceListChanged(currentServices, services) {
+		log.Infof("[Mesh] services lookup are %v", services)
+		r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
+		return services, true
+	}
+	return nil, false
 }
 
 func ifServiceListChanged(currentServices, newNsServices map[string]struct{}) bool {

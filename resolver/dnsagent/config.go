@@ -20,10 +20,29 @@ package dnsagent
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 type resolverConfig struct {
-	RouteLabels map[string]string `json:"route_labels"`
+	RouteLabelsMap map[string]string `json:"-"`
+	RouteLabels    string            `json:"route_labels"`
+}
+
+func parseLabels(value string) map[string]string {
+	values := make(map[string]string)
+	if len(value) == 0 {
+		return values
+	}
+	tokens := strings.Split(value, ",")
+	for _, token := range tokens {
+		idx := strings.Index(token, ":")
+		if idx < 0 {
+			values[token] = token
+		} else {
+			values[token[0:idx]] = token[idx+1:]
+		}
+	}
+	return values
 }
 
 func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
@@ -38,5 +57,6 @@ func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
 	if err = json.Unmarshal(jsonBytes, config); nil != err {
 		return nil, fmt.Errorf("fail to unmarshal %s config entry, err is %v", name, err)
 	}
+	config.RouteLabelsMap = parseLabels(config.RouteLabels)
 	return config, nil
 }
