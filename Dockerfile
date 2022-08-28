@@ -24,4 +24,4 @@ COPY polaris.yaml /data/polaris.yaml
 
 RUN chmod +x /data/polaris-sidecar
 
-ENTRYPOINT ["polaris-sidecar", "start"]
+ENTRYPOINT ["/data/polaris-sidecar", "start"]
