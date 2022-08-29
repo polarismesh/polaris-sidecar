@@ -175,7 +175,7 @@ func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 		recursors:       recurseAddresses,
 		recurseEnable:   polarisAgent.config.Recurse.Enable,
 	}
-	if polarisAgent.config.MTLS != nil {
+	if polarisAgent.config.MTLS != nil && polarisAgent.config.MTLS.Enable {
 		log.Info("create mtls agent")
 		agent, err := mtlsAgent.New(mtlsAgent.Option{
 			CAServer: polarisAgent.config.MTLS.CAServer,
