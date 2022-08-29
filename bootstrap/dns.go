@@ -93,6 +93,7 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	for _, handler := range d.resolvers {
 		resp = handler.ServeDNS(ctx, question, qname)
 		if nil != resp {
+			log.Infof("[agent] response for %s is %v", question.Name, resp)
 			d.sendDnsResponse(w, req, resp)
 			return
 		}
