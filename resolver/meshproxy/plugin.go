@@ -88,7 +88,7 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qnam
 		log.Infof("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
 		return nil
 	}
-	return r.localDNSServer.ServeDNS(ctx, &question)
+	return r.localDNSServer.ServeDNS(ctx, &question, qname)
 }
 
 func (r *resolverMesh) Start(ctx context.Context) {

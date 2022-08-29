@@ -37,9 +37,8 @@ type LocalDNSServer struct {
 func (h *LocalDNSServer) UpdateLookupTable(polarisServices map[string]struct{}, dnsResponseIp string) {
 	lookupTable := &LookupTable{
 		allHosts: map[string]struct{}{},
-		name4:    map[string][]dns.RR{},
-		name6:    map[string][]dns.RR{},
-		cname:    map[string][]dns.RR{},
+		name4:    map[string][]net.IP{},
+		name6:    map[string][]net.IP{},
 		dnsTtl:   h.dnsTtl,
 	}
 
@@ -64,11 +63,8 @@ type LookupTable struct {
 
 	// The key is a FQDN matching a DNS query (like example.com.), the value is pre-created DNS RR records
 	// of A or AAAA type as appropriate.
-	name4 map[string][]dns.RR
-	name6 map[string][]dns.RR
-	// The cname records here (comprised of different variants of the hosts above,
-	// expanded by the search namespaces) pointing to the actual host.
-	cname map[string][]dns.RR
+	name4 map[string][]net.IP
+	name6 map[string][]net.IP
 
 	dnsTtl uint32
 }
@@ -78,10 +74,10 @@ func (table *LookupTable) buildDNSAnswers(altHosts map[string]struct{}, ipv4 []n
 		h = strings.ToLower(h)
 		table.allHosts[h] = struct{}{}
 		if len(ipv4) > 0 {
-			table.name4[h] = a(h, ipv4, table.dnsTtl)
+			table.name4[h] = ipv4
 		}
 		if len(ipv6) > 0 {
-			table.name6[h] = aaaa(h, ipv6, table.dnsTtl)
+			table.name6[h] = ipv6
 		}
 	}
 }
@@ -89,7 +85,7 @@ func (table *LookupTable) buildDNSAnswers(altHosts map[string]struct{}, ipv4 []n
 // Given a host, this function first decides if the host is part of our service registry.
 // If it is not part of the registry, return nil so that caller queries upstream. If it is part
 // of registry, we will look it up in one of our tables, failing which we will return NXDOMAIN.
-func (table *LookupTable) lookupHost(qtype uint16, hostname string) ([]dns.RR, bool) {
+func (table *LookupTable) lookupHost(qtype uint16, questionHost string, hostname string) ([]dns.RR, bool) {
 	var hostFound bool
 	if _, hostFound = table.allHosts[hostname]; !hostFound {
 		// this is not from our registry
@@ -97,20 +93,12 @@ func (table *LookupTable) lookupHost(qtype uint16, hostname string) ([]dns.RR, b
 	}
 
 	var out []dns.RR
-	// Odds are, the first query will always be an expanded hostname
-	// (productpage.ns1.svc.cluster.local.ns1.svc.cluster.local)
-	// So lookup the cname table first
-	cn := table.cname[hostname]
-	if len(cn) > 0 {
-		// this was a cname match
-		hostname = cn[0].(*dns.CNAME).Target
-	}
 	var ipAnswers []dns.RR
 	switch qtype {
 	case dns.TypeA:
-		ipAnswers = table.name4[hostname]
+		ipAnswers = a(questionHost, table.name4[hostname], table.dnsTtl)
 	case dns.TypeAAAA:
-		ipAnswers = table.name6[hostname]
+		ipAnswers = aaaa(questionHost, table.name6[hostname], table.dnsTtl)
 	}
 
 	if len(ipAnswers) > 0 {
@@ -119,7 +107,6 @@ func (table *LookupTable) lookupHost(qtype uint16, hostname string) ([]dns.RR, b
 		// with additional DNS queries. Instead, they expect all the resolved records to be in the same
 		// big DNS response (presumably assuming that a recursive DNS query should do the deed, resolve
 		// cname et al and return the composite response).
-		out = append(out, cn...)
 		out = append(out, ipAnswers...)
 	}
 	return out, hostFound
@@ -132,7 +119,7 @@ func newLocalDNSServer(dnsTtl uint32) (*LocalDNSServer, error) {
 	return h, nil
 }
 
-func (h *LocalDNSServer) ServeDNS(ctx context.Context, question *dns.Question) *dns.Msg {
+func (h *LocalDNSServer) ServeDNS(ctx context.Context, question *dns.Question, qname string) *dns.Msg {
 	var response *dns.Msg
 	lp := h.lookupTable.Load()
 	if lp == nil {
@@ -142,8 +129,8 @@ func (h *LocalDNSServer) ServeDNS(ctx context.Context, question *dns.Question) *
 	lookupTable := lp.(*LookupTable)
 	var answers []dns.RR
 
-	hostname := strings.ToLower(question.Name)
-	answers, hostFound := lookupTable.lookupHost(question.Qtype, hostname)
+	hostname := strings.ToLower(qname)
+	answers, hostFound := lookupTable.lookupHost(question.Qtype, question.Name, hostname)
 
 	if hostFound {
 		response = new(dns.Msg)
@@ -180,16 +167,4 @@ func aaaa(host string, ips []net.IP, ttl uint32) []dns.RR {
 		answers[i] = r
 	}
 	return answers
-}
-
-func cname(host string, targetHost string, ttl uint32) []dns.RR {
-	answer := new(dns.CNAME)
-	answer.Hdr = dns.RR_Header{
-		Name:   host,
-		Rrtype: dns.TypeCNAME,
-		Class:  dns.ClassINET,
-		Ttl:    ttl,
-	}
-	answer.Target = targetHost
-	return []dns.RR{answer}
 }
