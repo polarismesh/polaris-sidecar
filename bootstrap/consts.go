@@ -26,6 +26,7 @@ import (
 const (
 	EnvSidecarBind                     = "SIDECAR_BIND"
 	EnvSidecarPort                     = "SIDECAR_PORT"
+	EnvSidecarNamespace                = "SIDECAR_NAMESPACE"
 	EnvSidecarRecurseEnable            = "SIDECAR_RECURSE_ENABLE"
 	EnvSidecarRecurseTimeout           = "SIDECAR_RECURSE_TIMEOUT"
 	EnvSidecarLogRotateOutputPath      = "SIDECAR_LOG_ROTATE_OUTPUT_PATH"

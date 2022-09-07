@@ -18,10 +18,8 @@
 package resolver
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/polarismesh/polaris-go/pkg/config"
+	"strings"
 
 	"github.com/polarismesh/polaris-go/pkg/model"
 )
@@ -37,27 +35,29 @@ var (
 
 // ParseQname parse the qname into service and suffix
 // qname format: <service>.<namespace>.<suffix>
-func ParseQname(qType uint16, qname string, suffix string) (*model.ServiceKey, error) {
+func ParseQname(qname string, suffix string, currentNs string) *model.ServiceKey {
 	var matched bool
 	qname, matched = MatchSuffix(qname, suffix)
 	if !matched {
-		return nil, nil
+		return nil
 	}
 	if strings.HasSuffix(qname, Quota) {
 		qname = qname[0 : len(qname)-1]
 	}
-	sepIndex := strings.LastIndex(qname, Quota)
-	if sepIndex < 0 {
-		return nil, fmt.Errorf("fail to parse qname %s: 1st dot index is -1", qname)
-	}
 	var namespace string
 	var serviceName string
-	namespace = qname[sepIndex+1:]
-	if strings.ToLower(namespace) == sysNamespace {
-		namespace = config.ServerNamespace
+	sepIndex := strings.LastIndex(qname, Quota)
+	if sepIndex < 0 {
+		namespace = currentNs
+		serviceName = qname
+	} else {
+		namespace = qname[sepIndex+1:]
+		if strings.ToLower(namespace) == sysNamespace {
+			namespace = config.ServerNamespace
+		}
+		serviceName = qname[:sepIndex]
 	}
-	serviceName = qname[:sepIndex]
-	return &model.ServiceKey{Namespace: namespace, Service: serviceName}, nil
+	return &model.ServiceKey{Namespace: namespace, Service: serviceName}
 }
 
 // MatchSuffix match the suffix and return the split qname

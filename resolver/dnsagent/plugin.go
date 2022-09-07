@@ -40,10 +40,11 @@ func init() {
 const name = resolver.PluginNameDnsAgent
 
 type resolverDiscovery struct {
-	consumer polaris.ConsumerAPI
-	suffix   string
-	dnsTtl   int
-	config   *resolverConfig
+	consumer  polaris.ConsumerAPI
+	suffix    string
+	dnsTtl    int
+	config    *resolverConfig
+	namespace string
 }
 
 // Name will return the name to resolver
@@ -68,6 +69,7 @@ func (r *resolverDiscovery) Initialize(c *resolver.ConfigEntry) error {
 		r.suffix = c.Suffix + resolver.Quota
 	}
 	r.dnsTtl = c.DnsTtl
+	r.namespace = c.Namespace
 	return err
 }
 
@@ -128,7 +130,7 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question,
 		}
 	}
 
-	instances, err := r.lookupFromPolaris(question)
+	instances, err := r.lookupFromPolaris(qname, r.namespace)
 	if err != nil {
 		return nil
 	}
@@ -149,12 +151,8 @@ func (r *resolverDiscovery) ServeDNS(ctx context.Context, question dns.Question,
 	return msg
 }
 
-func (r *resolverDiscovery) lookupFromPolaris(question dns.Question) ([]model.Instance, error) {
-	svcKey, err := resolver.ParseQname(question.Qtype, question.Name, r.suffix)
-	if nil != err {
-		log.Errorf("[discovery] invalid qname %s, err: %v", &question, err)
-		return nil, nil
-	}
+func (r *resolverDiscovery) lookupFromPolaris(qname string, currentNs string) ([]model.Instance, error) {
+	svcKey := resolver.ParseQname(qname, r.suffix, currentNs)
 	if nil == svcKey {
 		return nil, nil
 	}

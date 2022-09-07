@@ -32,11 +32,12 @@ const (
 
 // ConfigEntry: resolver plugin config entry
 type ConfigEntry struct {
-	Name   string                 `yaml:"name"`
-	Suffix string                 `yaml:"suffix"`
-	DnsTtl int                    `yaml:"dns_ttl"`
-	Enable bool                   `yaml:"enable"`
-	Option map[string]interface{} `yaml:"option"`
+	Name      string                 `yaml:"name"`
+	Suffix    string                 `yaml:"suffix"`
+	DnsTtl    int                    `yaml:"dns_ttl"`
+	Enable    bool                   `yaml:"enable"`
+	Option    map[string]interface{} `yaml:"option"`
+	Namespace string                 `yaml:"-"`
 }
 
 // NamingResolver resolver interface
