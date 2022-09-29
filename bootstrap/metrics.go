@@ -17,7 +17,9 @@
 
 package bootstrap
 
-type MTLSConfiguration struct {
-	Enable   bool   `yaml:"enable"`
-	CAServer string `yaml:"ca_server"`
+type MetricConfig struct {
+	// to enable the metrics server
+	Enable bool `yaml:"enable"`
+	// port listen for metric message
+	Port int `yaml:"port"`
 }

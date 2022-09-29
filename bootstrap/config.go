@@ -35,10 +35,12 @@ type BootConfig struct {
 type SidecarConfig struct {
 	Bind      string                  `yaml:"bind"`
 	Port      int                     `yaml:"port"`
+	Namespace string                  `yaml:"namespace"`
 	MTLS      *MTLSConfiguration      `yaml:"mtls"`
 	Recurse   *RecurseConfig          `yaml:"recurse"`
 	Logger    *log.Options            `yaml:"logger"`
 	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
+	Metrics   *MetricConfig           `yaml:"metrics"`
 }
 
 // String toString output
@@ -99,6 +101,10 @@ func defaultSidecarConfig() *SidecarConfig {
 					"dns_answer_ip":       "10.4.4.4",
 				},
 			},
+		},
+		Metrics: &MetricConfig{
+			Enable: false,
+			Port:   15985,
 		},
 	}
 }
@@ -167,6 +173,7 @@ func parseLabels(labels string) map[string]string {
 func (s *SidecarConfig) mergeEnv() {
 	s.Bind = getEnvStringValue(EnvSidecarBind, s.Bind)
 	s.Port = getEnvIntValue(EnvSidecarPort, s.Port)
+	s.Namespace = getEnvStringValue(EnvSidecarNamespace, s.Namespace)
 	s.MTLS.Enable = getEnvBoolValue(EnvSidecarMtlsEnable, s.MTLS.Enable)
 	s.MTLS.CAServer = getEnvStringValue(EnvSidecarMtlsCAServer, s.MTLS.CAServer)
 	s.Recurse.Enable = getEnvBoolValue(EnvSidecarRecurseEnable, s.Recurse.Enable)
@@ -179,6 +186,7 @@ func (s *SidecarConfig) mergeEnv() {
 	s.Logger.OutputLevel = getEnvStringValue(EnvSidecarLogLevel, s.Logger.OutputLevel)
 	if len(s.Resolvers) > 0 {
 		for _, resolverConf := range s.Resolvers {
+			resolverConf.Namespace = s.Namespace
 			if resolverConf.Name == resolver.PluginNameDnsAgent {
 				resolverConf.DnsTtl = getEnvIntValue(EnvSidecarDnsTtl, resolverConf.DnsTtl)
 				resolverConf.Enable = getEnvBoolValue(EnvSidecarDnsEnable, resolverConf.Enable)
@@ -201,8 +209,9 @@ func (s *SidecarConfig) mergeEnv() {
 				}
 			}
 		}
-
 	}
+	s.Metrics.Enable = getEnvBoolValue(EnvSidecarMetricEnable, s.Metrics.Enable)
+	s.Metrics.Port = getEnvIntValue(EnvSidecarMetricListenPort, s.Metrics.Port)
 }
 
 func (s *SidecarConfig) mergeBootConfig(config *BootConfig) error {

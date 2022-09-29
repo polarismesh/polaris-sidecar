@@ -20,6 +20,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"github.com/polarismesh/polaris-sidecar/metrics"
 	"os"
 	"os/signal"
 	"strconv"
@@ -34,11 +35,12 @@ import (
 
 // Agent provide the listener to dns server
 type Agent struct {
-	config    *SidecarConfig
-	resolvers []resolver.NamingResolver
-	tcpServer *dns.Server
-	udpServer *dns.Server
-	mtlsAgent *mtlsAgent.Agent
+	config       *SidecarConfig
+	resolvers    []resolver.NamingResolver
+	tcpServer    *dns.Server
+	udpServer    *dns.Server
+	mtlsAgent    *mtlsAgent.Agent
+	metricServer *metrics.Server
 }
 
 // Start the main agent routines
@@ -185,6 +187,10 @@ func newAgent(configFile string, bootConfig *BootConfig) (*Agent, error) {
 		}
 		polarisAgent.mtlsAgent = agent
 	}
+	if polarisAgent.config.Metrics.Enable {
+		log.Infof("create metric server")
+		polarisAgent.metricServer = metrics.NewServer(polarisAgent.config.Namespace, polarisAgent.config.Metrics.Port)
+	}
 	return polarisAgent, nil
 }
 
@@ -214,6 +220,15 @@ func (p *Agent) Start(ctx context.Context) error {
 		go func() {
 			log.Info("start mtls agent")
 			errChan <- p.mtlsAgent.Run(mCtx)
+		}()
+	}
+	if p.metricServer != nil {
+		go func() {
+			log.Info("start metric server")
+			err := p.metricServer.Start(ctx)
+			if nil != err {
+				errChan <- err
+			}
 		}()
 	}
 

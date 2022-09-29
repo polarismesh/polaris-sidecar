@@ -55,7 +55,7 @@ func TestParseYamlConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	cfg := &SidecarConfig{}
-	err = parseYamlContent(testCfg, cfg)
+	err = parseYamlContent([]byte(testCfg), cfg)
 	if nil != err {
 		t.Fatal(err)
 	}

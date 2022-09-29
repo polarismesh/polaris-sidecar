@@ -26,6 +26,7 @@ import (
 const (
 	EnvSidecarBind                     = "SIDECAR_BIND"
 	EnvSidecarPort                     = "SIDECAR_PORT"
+	EnvSidecarNamespace                = "SIDECAR_NAMESPACE"
 	EnvSidecarRecurseEnable            = "SIDECAR_RECURSE_ENABLE"
 	EnvSidecarRecurseTimeout           = "SIDECAR_RECURSE_TIMEOUT"
 	EnvSidecarLogRotateOutputPath      = "SIDECAR_LOG_ROTATE_OUTPUT_PATH"
@@ -44,6 +45,8 @@ const (
 	EnvSidecarMeshAnswerIp             = "SIDECAR_MESH_ANSWER_IP"
 	EnvSidecarMtlsEnable               = "SIDECAR_MTLS_ENABLE"
 	EnvSidecarMtlsCAServer             = "SIDECAR_MTLS_CA_SERVER"
+	EnvSidecarMetricEnable             = "SIDECAR_METRIC_ENABLE"
+	EnvSidecarMetricListenPort         = "SIDECAR_METRIC_LISTEN_PORT"
 )
 
 func getEnvStringValue(envName string, defaultValue string) string {

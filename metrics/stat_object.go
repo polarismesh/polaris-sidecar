@@ -15,9 +15,29 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package metrics
 
-type MTLSConfiguration struct {
-	Enable   bool   `yaml:"enable"`
-	CAServer string `yaml:"ca_server"`
+type StatsObject struct {
+	Stats []*Stat `json:"stats"`
+}
+
+type Stat struct {
+	Name       string      `json:"name"`
+	Value      interface{} `json:"value"`
+	Histograms *Histograms `json:"histograms"`
+}
+
+type Histograms struct {
+	ComputedQuantiles  []*ComputedQuantiles `json:"computed_quantiles"`
+	SupportedQuantiles []float64            `json:"supported_quantiles"`
+}
+
+type CumulativeObject struct {
+	Cumulative interface{} `json:"cumulative"`
+	Interval   interface{} `json:"interval"`
+}
+
+type ComputedQuantiles struct {
+	Name   string              `json:"name"`
+	Values []*CumulativeObject `json:"values"`
 }
