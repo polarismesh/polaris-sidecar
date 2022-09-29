@@ -40,6 +40,7 @@ type SidecarConfig struct {
 	Recurse   *RecurseConfig          `yaml:"recurse"`
 	Logger    *log.Options            `yaml:"logger"`
 	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
+	Metrics   *MetricConfig           `yaml:"metrics"`
 }
 
 // String toString output
@@ -100,6 +101,10 @@ func defaultSidecarConfig() *SidecarConfig {
 					"dns_answer_ip":       "10.4.4.4",
 				},
 			},
+		},
+		Metrics: &MetricConfig{
+			Enable: false,
+			Port:   15985,
 		},
 	}
 }
@@ -204,8 +209,9 @@ func (s *SidecarConfig) mergeEnv() {
 				}
 			}
 		}
-
 	}
+	s.Metrics.Enable = getEnvBoolValue(EnvSidecarMetricEnable, s.Metrics.Enable)
+	s.Metrics.Port = getEnvIntValue(EnvSidecarMetricListenPort, s.Metrics.Port)
 }
 
 func (s *SidecarConfig) mergeBootConfig(config *BootConfig) error {
