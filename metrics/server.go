@@ -89,6 +89,7 @@ func (s *Server) Start(ctx context.Context) error {
 		return err
 	}
 	ticker := time.NewTicker(ticketDuration)
+	defer ticker.Stop()
 	values := make(map[InstanceMetricKey]*InstanceMetricValue)
 	for {
 		select {
