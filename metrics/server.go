@@ -97,6 +97,7 @@ func (s *Server) Start(ctx context.Context) error {
 			s.reportMetricByCluster(values)
 		case <-ctx.Done():
 			log.Errorf("Server metric service stopped")
+			s.consumer.Destroy()
 			return nil
 		}
 	}
