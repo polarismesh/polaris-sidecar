@@ -32,7 +32,7 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 
 #### Precondition
 
-- Before installing and using Polaris-Sidecar, you need to install the Northern Polarite server, please refer to [Polaris Star server installation document](https://polarismesh.cn/zh/doc/%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/%E5%AE%89%E8%A3%85%E6%9C%8D%E5%8A%A1%E7%AB%AF/%E5%AE%89%E8%A3%85%E5%8D%95%E6%9C%BA%E7%89%88.html#%E5%8D%95%E6%9C%BA%E7%89%88%E5%AE%89%E8%A3%85).
+- Before installing and using Polaris-Sidecar, you need to install the Northern Polarite server, please refer to [Polaris Star server installation document](https://polarismesh.cn/docs/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%AE%89%E8%A3%85/%E5%8D%95%E6%9C%BA%E7%89%88%E5%AE%89%E8%A3%85/).
 
 #### Install in a virtual machine environment
 
