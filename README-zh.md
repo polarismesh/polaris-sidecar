@@ -33,8 +33,8 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 #### 前提条件
 
 - 在安装和使用 polaris-sidecar 之前，需要先安装北极星服务端
-  - 虚拟机环境参考[北极星服务端安装文档](https://polarismesh.cn/zh/doc/快速入门/安装服务端/安装单机版.html#单机版安装)。
-  - 容器环境参考[北极星服务端安装文档](https://polarismesh.cn/zh/doc/%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/%E5%AE%89%E8%A3%85%E6%9C%8D%E5%8A%A1%E7%AB%AF/%E5%AE%89%E8%A3%85%E5%8D%95%E6%9C%BA%E7%89%88.html#%E5%AE%B9%E5%99%A8%E5%8C%96)。
+  - 虚拟机环境参考[北极星服务端安装文档](https://polarismesh.cn/docs/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%AE%89%E8%A3%85/%E5%8D%95%E6%9C%BA%E7%89%88%E5%AE%89%E8%A3%85/)。
+  - 容器环境参考[北极星服务端安装文档](https://polarismesh.cn/docs/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%AE%89%E8%A3%85/%E5%8D%95%E6%9C%BA%E7%89%88%E5%AE%89%E8%A3%85/#%E4%BD%BF%E7%94%A8-docker-%E5%AE%89%E8%A3%85)。
 
 #### 虚拟机环境下安装
 
