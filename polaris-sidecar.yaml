@@ -23,8 +23,7 @@ resolvers:
     enable: true
     suffix: "."
     # option:
-    #   route_labels:
-    #     key: value
+    #   route_labels: "key:value,key:value"
   - name: meshproxy
     dns_ttl: 120
     enable: false

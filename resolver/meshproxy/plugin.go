@@ -19,8 +19,9 @@ package meshproxy
 
 import (
 	"context"
-	"github.com/polarismesh/polaris-go"
 	"time"
+
+	"github.com/polarismesh/polaris-go"
 
 	"github.com/miekg/dns"
 
@@ -50,6 +51,7 @@ func (r *resolverMesh) Initialize(c *resolver.ConfigEntry) error {
 	if nil != err {
 		return err
 	}
+	r.config.Namespace = c.Namespace
 	r.consumer, err = polaris.NewConsumerAPI()
 	if nil != err {
 		return err
@@ -88,6 +90,12 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qnam
 		log.Infof("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
 		return nil
 	}
+	ret := r.localDNSServer.ServeDNS(ctx, &question, qname)
+	if ret != nil {
+		return ret
+	}
+	// 可能这个时候 qname 只有服务名称，这里手动补充 Namespace 信息
+	qname = qname + "." + r.config.Namespace
 	return r.localDNSServer.ServeDNS(ctx, &question, qname)
 }
 

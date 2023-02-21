@@ -56,7 +56,7 @@ func (r *envoyRegistry) GetCurrentNsService() (map[string]struct{}, error) {
 	}
 	services = make(map[string]struct{}, len(resp.GetValue()))
 	for _, svc := range resp.GetValue() {
-		services[svc.Service] = struct{}{}
+		// 这里必须全匹配的模式存储
 		services[svc.Service+"."+svc.Namespace] = struct{}{}
 	}
 	return services, nil
