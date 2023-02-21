@@ -54,7 +54,8 @@ function install_polaris_sidecar() {
     pushd ${polaris_sidecar_dirname}
 
     # 修改 polaris_server_addr 地址
-    sed -i "s/##POLARIS_SERVER_ADDR##/${polaris_server_addr}/g" polaris.yaml
+    export POLARIS_ADDRESS="${polaris_server_addr}"
+    echo "POLARIS_ADDRESS=${POLARIS_ADDRESS}"
     /bin/bash ./tool/start.sh
     echo -e "[INFO] install polaris sidecar success"
     popd

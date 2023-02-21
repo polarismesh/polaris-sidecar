@@ -12,3 +12,7 @@ test/cover.out
 test/index.html
 deploy/test.sh
 *.log*
+
+logs/
+
+.vscode

@@ -23,6 +23,7 @@ import (
 )
 
 type resolverConfig struct {
+	Namespace         string `json:"namespace"`
 	RegistryHost      string `json:"registry_host"`
 	RegistryPort      int    `json:"registry_port"`
 	ReloadIntervalSec int    `json:"reload_interval_sec"`
