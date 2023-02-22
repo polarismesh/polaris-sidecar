@@ -19,6 +19,7 @@ package meshproxy
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/polarismesh/polaris-go"
@@ -95,7 +96,10 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qnam
 		return ret
 	}
 	// 可能这个时候 qname 只有服务名称，这里手动补充 Namespace 信息
-	qname = qname + "." + r.config.Namespace
+	if strings.HasSuffix(qname, resolver.Quota) {
+		qname = qname[0 : len(qname)-1]
+	}
+	qname = qname + "." + r.config.Namespace + "."
 	return r.localDNSServer.ServeDNS(ctx, &question, qname)
 }
 
