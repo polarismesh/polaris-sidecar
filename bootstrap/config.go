@@ -300,9 +300,11 @@ func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig,
 }
 
 func parseYamlContent(content []byte, sidecarConfig *SidecarConfig) error {
-	decoder := yaml.NewDecoder(bytes.NewBuffer(content))
+	data := []byte(os.ExpandEnv(string(content)))
+	decoder := yaml.NewDecoder(bytes.NewBuffer(data))
 	if err := decoder.Decode(sidecarConfig); nil != err {
 		return errors.New(fmt.Sprintf("parse yaml %s error:%s", content, err.Error()))
 	}
+	log.Infof("[sidecar] config content : %s", content)
 	return nil
 }
