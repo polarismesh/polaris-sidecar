@@ -26,7 +26,6 @@ metadata:
     app: polaris-sidecar-dns
   name: polaris-sidecar-dns
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
   selector:
     matchLabels:
@@ -37,7 +36,7 @@ spec:
         app: polaris-sidecar-dns
     spec:
       containers:
-        - image: polarismesh/polaris-sidecar:lastest
+        - image: polarismesh/polaris-sidecar:latest
           imagePullPolicy: Always
           name: polaris-sidecar
           command: ["./polaris-sidecar"]
@@ -72,7 +71,7 @@ spec:
             runAsNonRoot: false
             runAsUser: 0
           volumeMounts:
-            - mountPath: /root/polaris.yaml
+            - mountPath: /data/polaris.yaml
               name: polaris-client-config
               subPath: polaris.yaml
           terminationMessagePath: /dev/termination-log
@@ -83,7 +82,3 @@ spec:
             defaultMode: 420
             name: polaris-client-config
           name: polaris-client-config
-  updateStrategy:
-    rollingUpdate:
-      partition: 0
-    type: RollingUpdate
