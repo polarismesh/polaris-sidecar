@@ -42,11 +42,23 @@ func (d *dnsHandler) preprocess(qname string) string {
 	if len(d.searchNames) == 0 {
 		return qname
 	}
-	for _, searchName := range d.searchNames {
-		if strings.HasSuffix(qname, searchName) {
-			return qname[:len(qname)-len(searchName)]
+
+	var matched bool
+
+	for {
+		for _, searchName := range d.searchNames {
+			if strings.HasSuffix(qname, searchName) {
+				matched = true
+				qname = qname[:len(qname)-len(searchName)]
+			}
 		}
+
+		if !matched {
+			break
+		}
+		matched = false
 	}
+
 	return qname
 }
 
