@@ -30,8 +30,9 @@ import (
 
 type LocalDNSServer struct {
 	// dns look up table
-	lookupTable atomic.Value
-	dnsTtl      uint32
+	lookupTable        atomic.Value
+	dnsTtl             uint32
+	recursionAvailable bool
 }
 
 func (h *LocalDNSServer) UpdateLookupTable(polarisServices map[string]struct{}, dnsResponseIp string) {
@@ -112,9 +113,10 @@ func (table *LookupTable) lookupHost(qtype uint16, questionHost string, hostname
 	return out, hostFound
 }
 
-func newLocalDNSServer(dnsTtl uint32) (*LocalDNSServer, error) {
+func newLocalDNSServer(dnsTtl uint32, recursionAvailable bool) (*LocalDNSServer, error) {
 	h := &LocalDNSServer{
-		dnsTtl: dnsTtl,
+		dnsTtl:             dnsTtl,
+		recursionAvailable: recursionAvailable,
 	}
 	return h, nil
 }
@@ -135,11 +137,11 @@ func (h *LocalDNSServer) ServeDNS(ctx context.Context, question *dns.Question, q
 	if hostFound {
 		response = new(dns.Msg)
 		response.Authoritative = true
+		// https://github.com/coredns/coredns/issues/3835
+		response.RecursionAvailable = h.recursionAvailable
 		response.Answer = answers
 		response.Rcode = dns.RcodeSuccess
 		return response
-	} else {
-		log.Infof("[Mesh] host not found for name %s", hostname)
 	}
 	return nil
 }

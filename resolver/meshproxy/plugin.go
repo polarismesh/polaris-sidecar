@@ -62,7 +62,7 @@ func (r *resolverMesh) Initialize(c *resolver.ConfigEntry) error {
 		return err
 	}
 	r.suffix = c.Suffix
-	r.localDNSServer, err = newLocalDNSServer(uint32(c.DnsTtl))
+	r.localDNSServer, err = newLocalDNSServer(uint32(c.DnsTtl), r.config.RecursionAvailable)
 	if nil != err {
 		return err
 	}
@@ -100,7 +100,11 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qnam
 		qname = qname[0 : len(qname)-1]
 	}
 	qname = qname + "." + r.config.Namespace + "."
-	return r.localDNSServer.ServeDNS(ctx, &question, qname)
+	ret = r.localDNSServer.ServeDNS(ctx, &question, qname)
+	if ret == nil {
+		log.Infof("[Mesh] host not found for name %s", qname)
+	}
+	return ret
 }
 
 func (r *resolverMesh) Start(ctx context.Context) {
