@@ -30,3 +30,4 @@ resolvers:
     option:
       reload_interval_sec: 30
       dns_answer_ip: 10.4.4.4
+      recursion_available: true

@@ -23,12 +23,13 @@ import (
 )
 
 type resolverConfig struct {
-	Namespace         string `json:"namespace"`
-	RegistryHost      string `json:"registry_host"`
-	RegistryPort      int    `json:"registry_port"`
-	ReloadIntervalSec int    `json:"reload_interval_sec"`
-	DNSAnswerIp       string `json:"dns_answer_ip"`
-	FilterByBusiness  string `json:"filter_by_business"`
+	Namespace          string `json:"namespace"`
+	RegistryHost       string `json:"registry_host"`
+	RegistryPort       int    `json:"registry_port"`
+	ReloadIntervalSec  int    `json:"reload_interval_sec"`
+	DNSAnswerIp        string `json:"dns_answer_ip"`
+	FilterByBusiness   string `json:"filter_by_business"`
+	RecursionAvailable bool   `json:"recursion_available"`
 }
 
 func parseOptions(options map[string]interface{}) (*resolverConfig, error) {
