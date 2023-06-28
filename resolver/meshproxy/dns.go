@@ -25,7 +25,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 type LocalDNSServer struct {

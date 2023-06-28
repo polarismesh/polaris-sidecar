@@ -29,7 +29,8 @@ import (
 	"github.com/polarismesh/polaris-go/pkg/model"
 	"go.uber.org/zap"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
@@ -59,7 +60,7 @@ func (r *resolverDiscovery) Initialize(c *resolver.ConfigEntry) error {
 	if nil != err {
 		return err
 	}
-	r.consumer, err = polaris.NewConsumerAPI()
+	r.consumer, err = client.GetConsumerAPI()
 	if nil != err {
 		return err
 	}

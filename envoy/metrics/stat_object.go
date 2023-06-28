@@ -17,6 +17,28 @@
 
 package metrics
 
+import "fmt"
+
+type InstanceMetricKey struct {
+	ClusterName string
+	Host        string
+	Port        uint32
+}
+
+func (i InstanceMetricKey) String() string {
+	return fmt.Sprintf("ClusterName %s, Host %s, Port %d", i.ClusterName, i.Host, i.Port)
+}
+
+type InstanceMetricValue struct {
+	RqSuccess uint64
+	RqError   uint64
+	RqTotal   uint64
+}
+
+func (i InstanceMetricValue) String() string {
+	return fmt.Sprintf("RqSuccess %d, RqError %d, RqTotal %d", i.RqSuccess, i.RqError, i.RqTotal)
+}
+
 type StatsObject struct {
 	Stats []*Stat `json:"stats"`
 }

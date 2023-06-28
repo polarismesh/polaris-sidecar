@@ -18,9 +18,9 @@
 package resolver
 
 import (
-	"github.com/polarismesh/polaris-go/pkg/config"
 	"strings"
 
+	"github.com/polarismesh/polaris-go/pkg/config"
 	"github.com/polarismesh/polaris-go/pkg/model"
 )
 

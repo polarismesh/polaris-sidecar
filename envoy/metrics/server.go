@@ -20,23 +20,23 @@ package metrics
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	adminv3 "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"github.com/polarismesh/polaris-go"
-	"github.com/polarismesh/polaris-go/pkg/config"
-	"github.com/polarismesh/polaris-go/pkg/model"
-	"github.com/polarismesh/polaris-go/pkg/model/pb"
-	namingpb "github.com/polarismesh/polaris-go/pkg/model/pb/v1"
-	"github.com/polarismesh/polaris-go/plugin/statreporter/prometheus"
-	"github.com/polarismesh/polaris-sidecar/log"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	adminv3 "github.com/envoyproxy/go-control-plane/envoy/admin/v3"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/polarismesh/polaris-go"
+	"github.com/polarismesh/polaris-go/pkg/model"
+	"github.com/polarismesh/polaris-go/pkg/model/pb"
+	namingpb "github.com/polarismesh/polaris-go/pkg/model/pb/v1"
+
+	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 type Server struct {
@@ -53,38 +53,11 @@ func NewServer(namespace string, port int) *Server {
 	return srv
 }
 
-type InstanceMetricKey struct {
-	ClusterName string
-	Host        string
-	Port        uint32
-}
-
-func (i InstanceMetricKey) String() string {
-	return fmt.Sprintf("ClusterName %s, Host %s, Port %d", i.ClusterName, i.Host, i.Port)
-}
-
-type InstanceMetricValue struct {
-	RqSuccess uint64
-	RqError   uint64
-	RqTotal   uint64
-}
-
-func (i InstanceMetricValue) String() string {
-	return fmt.Sprintf("RqSuccess %d, RqError %d, RqTotal %d", i.RqSuccess, i.RqError, i.RqTotal)
-}
-
 const ticketDuration = 30 * time.Second
 
 func (s *Server) Start(ctx context.Context) error {
 	var err error
-	cfg := config.NewDefaultConfigurationWithDomain()
-	cfg.GetConsumer().GetCircuitBreaker().SetEnable(false)
-	cfg.GetGlobal().GetStatReporter().SetEnable(true)
-	cfg.GetGlobal().GetStatReporter().SetChain([]string{prometheus.PluginName})
-	_ = cfg.GetGlobal().GetStatReporter().SetPluginConfig(prometheus.PluginName, &prometheus.Config{
-		Port: s.port,
-	})
-	s.consumer, err = polaris.NewConsumerAPIByConfig(cfg)
+	s.consumer, err = client.GetConsumerAPI()
 	if nil != err {
 		return err
 	}
@@ -200,7 +173,7 @@ func (s *Server) reportMetricByCluster(values map[InstanceMetricKey]*InstanceMet
 		return
 	}
 	delayValues := s.parseUpstreamDelay()
-	log.Infof("[Metric] parsed upstream delay is %v", delayValues)
+	log.Debugf("[Metric] parsed upstream delay is %v", delayValues)
 	clusterStatuses := clusters.GetClusterStatuses()
 	if len(clusterStatuses) > 0 {
 		for _, clusterStatus := range clusterStatuses {
@@ -256,7 +229,7 @@ func (s *Server) reportMetricByCluster(values map[InstanceMetricKey]*InstanceMet
 }
 
 func (s *Server) reportMetrics(metricKey InstanceMetricKey, subMetricValue *InstanceMetricValue, delay float64) {
-	log.Infof("start to report metric data %s, metric key %s, delay %v", *subMetricValue, metricKey, delay)
+	log.Debugf("start to report metric data %s, metric key %s, delay %v", *subMetricValue, metricKey, delay)
 	for i := 0; i < int(subMetricValue.RqSuccess); i++ {
 		s.reportStatus(metricKey, model.RetSuccess, 200, delay)
 	}

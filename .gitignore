@@ -16,3 +16,6 @@ deploy/test.sh
 logs/
 
 .vscode
+
+style_tool/
+goimports-reviser

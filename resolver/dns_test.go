@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package resolver
 
 import (
 	"testing"
@@ -77,10 +77,10 @@ func Test_dnsHandler_preprocess(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &dnsHandler{
+			d := &dnsServer{
 				searchNames: tt.fields.searchNames,
 			}
-			if got := d.preprocess(tt.args.qname); got != tt.want {
+			if got := d.Preprocess(tt.args.qname); got != tt.want {
 				t.Errorf("dnsHandler.preprocess() = %v, want %v", got, tt.want)
 			}
 		})

@@ -15,12 +15,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package config
 
 import (
-	"github.com/polarismesh/polaris-sidecar/log"
 	"os"
 	"strconv"
+
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 const (

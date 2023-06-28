@@ -15,7 +15,7 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 
 ### Architecture
 
-![Architecture](./image/polaris_architecture.png)
+![Architecture](./docs/image/polaris_architecture.png)
 
 ### Function
 
@@ -32,7 +32,7 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 
 #### Precondition
 
-- Before installing and using Polaris-Sidecar, you need to install the Northern Polarite server, please refer to [Polaris Star server installation document](https://polarismesh.cn/docs/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%AE%89%E8%A3%85/%E5%8D%95%E6%9C%BA%E7%89%88%E5%AE%89%E8%A3%85/).
+- Before installing and using Polaris-Sidecar, you need to install the Northern Polarite server, please refer to [Polaris Star server installation document](https://polarismesh.cn/docs/%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%AE%89%E8%A3%85/).
 
 #### Install in a virtual machine environment
 
@@ -108,7 +108,7 @@ Polaris-Sidecar mirroring is archived into dockerhub, requiring a deployed envir
 $ kubectl apply --filename deploy/job/job.yaml
 ```
 3. The POD after deploying Job is detailed below
-   ![deploy_job](./image/deploy_job.png)
+   ![deploy_job](./docs/image/deploy_job.png)
 4. After the Job is running, you can confirm the operation by querying the POD log.By default, successful service DNS query results will be output. If an error occurs, the DNS configuration may have problems.
 
 ```

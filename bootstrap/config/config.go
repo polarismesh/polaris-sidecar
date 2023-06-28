@@ -1,4 +1,21 @@
-package bootstrap
+/**
+ * Tencent is pleased to support the open source community by making CL5 available.
+ *
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company. All rights reserved.
+ *
+ * Licensed under the BSD 3-Clause License (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://opensource.org/licenses/BSD-3-Clause
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed
+ * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package config
 
 import (
 	"bytes"
@@ -11,10 +28,10 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-
 	"gopkg.in/yaml.v2"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/envoy/metrics"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
 
@@ -37,10 +54,15 @@ type SidecarConfig struct {
 	Port      int                     `yaml:"port"`
 	Namespace string                  `yaml:"namespace"`
 	MTLS      *MTLSConfiguration      `yaml:"mtls"`
-	Recurse   *RecurseConfig          `yaml:"recurse"`
 	Logger    *log.Options            `yaml:"logger"`
+	Recurse   *resolver.RecurseConfig `yaml:"recurse"`
 	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
-	Metrics   *MetricConfig           `yaml:"metrics"`
+	Metrics   *metrics.MetricConfig   `yaml:"metrics"`
+}
+
+type MTLSConfiguration struct {
+	Enable   bool   `yaml:"enable"`
+	CAServer string `yaml:"ca_server"`
 }
 
 // String toString output
@@ -52,19 +74,12 @@ func (s SidecarConfig) String() string {
 	return string(strBytes)
 }
 
-// RecurseConfig recursor name resolve config
-type RecurseConfig struct {
-	Enable      bool     `yaml:"enable"`
-	TimeoutSec  int      `yaml:"timeoutSec"`
-	NameServers []string `yaml:"name_servers"`
-}
-
 // 设置关键默认值
 func defaultSidecarConfig() *SidecarConfig {
 	return &SidecarConfig{
 		Bind: "0.0.0.0",
 		Port: 53,
-		Recurse: &RecurseConfig{
+		Recurse: &resolver.RecurseConfig{
 			Enable:     false,
 			TimeoutSec: 1,
 		},
@@ -102,14 +117,14 @@ func defaultSidecarConfig() *SidecarConfig {
 				},
 			},
 		},
-		Metrics: &MetricConfig{
+		Metrics: &metrics.MetricConfig{
 			Enable: false,
 			Port:   15985,
 		},
 	}
 }
 
-func (s *SidecarConfig) bindLocalhost() bool {
+func (s *SidecarConfig) BindLocalhost() bool {
 	bindIP := net.ParseIP(s.Bind)
 	return bindIP.IsLoopback() || bindIP.IsUnspecified()
 }
@@ -269,7 +284,7 @@ func (s *SidecarConfig) mergeBootConfig(config *BootConfig) error {
 	return errs.ErrorOrNil()
 }
 
-func isFile(path string) bool {
+func IsFile(path string) bool {
 	s, err := os.Stat(path)
 	if err != nil {
 		return false
@@ -277,10 +292,10 @@ func isFile(path string) bool {
 	return !s.IsDir()
 }
 
-// parseYamlConfig parse config file to object
-func parseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig, error) {
+// ParseYamlConfig parse config file to object
+func ParseYamlConfig(configFile string, bootConfig *BootConfig) (*SidecarConfig, error) {
 	sidecarConfig := defaultSidecarConfig()
-	if len(configFile) > 0 && isFile(configFile) {
+	if len(configFile) > 0 && IsFile(configFile) {
 		buf, err := ioutil.ReadFile(configFile)
 		if nil != err {
 			return nil, errors.New(fmt.Sprintf("read file %s error", configFile))

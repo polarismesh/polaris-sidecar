@@ -30,6 +30,21 @@ const (
 	PluginNameMeshProxy = "meshproxy"
 )
 
+type ResolverConfig struct {
+	BindLocalhost bool
+	BindIP        string
+	BindPort      uint32
+	Recurse       *RecurseConfig
+	Resolvers     []*ConfigEntry
+}
+
+// RecurseConfig recursor name resolve config
+type RecurseConfig struct {
+	Enable      bool     `yaml:"enable"`
+	TimeoutSec  int      `yaml:"timeoutSec"`
+	NameServers []string `yaml:"name_servers"`
+}
+
 // ConfigEntry: resolver plugin config entry
 type ConfigEntry struct {
 	Name      string                 `yaml:"name"`

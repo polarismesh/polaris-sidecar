@@ -15,9 +15,24 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package client
 
-type MTLSConfiguration struct {
-	Enable   bool   `yaml:"enable"`
-	CAServer string `yaml:"ca_server"`
+import "time"
+
+type Config struct {
+	Addresses []string `yaml:"addresses"`
+	Metrics   *Metrics
+}
+
+type Metrics struct {
+	// port listen for metric message
+	Port int `yaml:"port"`
+	// Type metrics data report type pull/push
+	Type string `yaml:"type"`
+	// IP if use pull, need open Prometheus HttpServer
+	IP string `yaml:"-"`
+	// Interval if use push, need set report interval metrics data to pushgateway
+	Interval time.Duration `yaml:"interval"`
+	// Address if use push, need set report metrics data to pushgateway server
+	Address string `yaml:"address"`
 }

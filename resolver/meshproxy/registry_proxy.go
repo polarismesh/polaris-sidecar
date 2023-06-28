@@ -19,7 +19,8 @@ package meshproxy
 
 import (
 	"github.com/polarismesh/polaris-go"
-	"github.com/polarismesh/polaris-sidecar/log"
+
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 type registry interface {

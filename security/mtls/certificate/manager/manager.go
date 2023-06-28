@@ -8,7 +8,7 @@ import (
 	"encoding/pem"
 	"time"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate"
 )
 

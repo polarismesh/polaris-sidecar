@@ -8,9 +8,10 @@ import (
 	envoytls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/intel-go/cpuid"
-	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate"
 )
 
 // cryptombSupported indicate that whether the cpu can use crypto_mb library.

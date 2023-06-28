@@ -1,11 +1,3 @@
-bind: 0.0.0.0
-port: 53
-namespace: default
-recurse:
-  enable: false
-  timeoutSec: 1
-mtls:
-  enable: false
 logger:
   output_paths:
     - stdout
@@ -17,6 +9,28 @@ logger:
   rotation_max_backups: 10
   rotation_max_age: 7
   output_level: info
+polaris:
+  addresses: 
+    - ${POLARIS_ADDRESS}
+  location:
+    # 设置 polaris-sidecar 进程地理信息的提供插件
+    # 设置为 env 时，可以在 linux 中注入以下环境变量
+    # POLARIS_INSTANCE_REGION: 设置 region 信息, 例如 china
+    # POLARIS_INSTANCE_ZONE: 设置 zone 信息, 例如 ap-guangzhou
+    # POLARIS_INSTANCE_CAMPUS: 设置 IDC 信息, 例如 ap-guangzhou-3
+    provider: env
+bind: 0.0.0.0
+port: 53
+namespace: default
+recurse:
+  enable: false
+  timeoutSec: 1
+mtls:
+  enable: false
+metrics:
+  enable: true
+  type: pull
+  metricPort: 0
 resolvers:
   - name: dnsagent
     dns_ttl: 10
