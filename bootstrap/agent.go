@@ -193,6 +193,9 @@ func (p *Agent) registerDebugeHandler(handlers []debughttp.DebugHandler) {
 	mux := p.debugSvr.Handler.(*http.ServeMux)
 	for i := range handlers {
 		handler := handlers[i]
+		if len(handler.Path) == 0 {
+			continue
+		}
 		mux.HandleFunc(handler.Path, handler.Handler)
 	}
 }
