@@ -18,5 +18,30 @@
 package rls
 
 type Config struct {
-	Port uint32
+	Enable   bool     `yaml:"enable"`
+	Network  string   `yaml:"-"`
+	Address  string   `yaml"-"`
+	BindPort uint32   `yaml:"port"`
+	TLSInfo  *TLSInfo `yaml:"tls_info"`
+}
+
+const DefaultRLSAddress = "/var/run/polaris/ratelimit/rls.sock"
+
+// TLSInfo tls 配置信息
+type TLSInfo struct {
+	// CertFile 服务端证书文件
+	CertFile string `yaml:"cert_file"`
+	// KeyFile CertFile 的密钥 key 文件
+	KeyFile string `yaml"json:"key_file"`
+}
+
+// IsEmpty 检查 tls 配置信息是否为空 当证书和密钥同时存在时才不为空
+func (t *TLSInfo) IsEmpty() bool {
+	if t == nil {
+		return true
+	}
+	if t.CertFile != "" && t.KeyFile != "" {
+		return false
+	}
+	return true
 }

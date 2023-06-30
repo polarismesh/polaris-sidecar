@@ -28,9 +28,11 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
+	sdkconf "github.com/polarismesh/polaris-go/pkg/config"
 	"gopkg.in/yaml.v2"
 
 	"github.com/polarismesh/polaris-sidecar/envoy/metrics"
+	"github.com/polarismesh/polaris-sidecar/envoy/rls"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
@@ -50,19 +52,41 @@ type BootConfig struct {
 
 // SidecarConfig global sidecar config struct
 type SidecarConfig struct {
-	Bind      string                  `yaml:"bind"`
-	Port      int                     `yaml:"port"`
-	Namespace string                  `yaml:"namespace"`
-	MTLS      *MTLSConfiguration      `yaml:"mtls"`
-	Logger    *log.Options            `yaml:"logger"`
-	Recurse   *resolver.RecurseConfig `yaml:"recurse"`
-	Resolvers []*resolver.ConfigEntry `yaml:"resolvers"`
-	Metrics   *metrics.MetricConfig   `yaml:"metrics"`
+	PolarisConfig *PolarisConfig          `yaml:"polaris"`
+	Bind          string                  `yaml:"bind"`
+	Port          int                     `yaml:"port"`
+	Namespace     string                  `yaml:"namespace"`
+	MTLS          *MTLSConfiguration      `yaml:"mtls"`
+	Logger        *log.Options            `yaml:"logger"`
+	Recurse       *resolver.RecurseConfig `yaml:"recurse"`
+	Resolvers     []*resolver.ConfigEntry `yaml:"resolvers"`
+	Metrics       *metrics.MetricConfig   `yaml:"metrics"`
+	RateLimit     *rls.Config             `yaml:"ratelimit"`
+	Debugger      *DebugConfig            `yaml:"debugger"`
+}
+
+type PolarisConfig struct {
+	Adddresses []string                    `yaml:"adddresses"`
+	Location   *sdkconf.LocationConfigImpl `yaml:"location"`
+}
+
+type Location struct {
+	Providers []*LocationProvider `yaml:"providers"`
+}
+
+type LocationProvider struct {
+	Type    string                 `yaml:"type" json:"type"`
+	Options map[string]interface{} `yaml:"options" json:"options"`
 }
 
 type MTLSConfiguration struct {
 	Enable   bool   `yaml:"enable"`
 	CAServer string `yaml:"ca_server"`
+}
+
+type DebugConfig struct {
+	Enable bool  `yaml:"enable"`
+	Port   int32 `yaml:"port"`
 }
 
 // String toString output
@@ -77,6 +101,11 @@ func (s SidecarConfig) String() string {
 // 设置关键默认值
 func defaultSidecarConfig() *SidecarConfig {
 	return &SidecarConfig{
+		PolarisConfig: &PolarisConfig{
+			Adddresses: []string{
+				"127.0.0.1:8091",
+			},
+		},
 		Bind: "0.0.0.0",
 		Port: 53,
 		Recurse: &resolver.RecurseConfig{
@@ -116,6 +145,11 @@ func defaultSidecarConfig() *SidecarConfig {
 					"dns_answer_ip":       "10.4.4.4",
 				},
 			},
+		},
+		RateLimit: &rls.Config{
+			Enable:  false,
+			Network: "uinx",
+			Address: rls.DefaultRLSAddress,
 		},
 		Metrics: &metrics.MetricConfig{
 			Enable: false,
@@ -189,8 +223,10 @@ func (s *SidecarConfig) mergeEnv() {
 	s.Bind = getEnvStringValue(EnvSidecarBind, s.Bind)
 	s.Port = getEnvIntValue(EnvSidecarPort, s.Port)
 	s.Namespace = getEnvStringValue(EnvSidecarNamespace, s.Namespace)
+	s.PolarisConfig.Adddresses = getEnvStringsValue(EnvPolarisAddress, s.PolarisConfig.Adddresses)
 	s.MTLS.Enable = getEnvBoolValue(EnvSidecarMtlsEnable, s.MTLS.Enable)
 	s.MTLS.CAServer = getEnvStringValue(EnvSidecarMtlsCAServer, s.MTLS.CAServer)
+	s.RateLimit.Enable = getEnvBoolValue(EnvSidecarRLSEnable, s.MTLS.Enable)
 	s.Recurse.Enable = getEnvBoolValue(EnvSidecarRecurseEnable, s.Recurse.Enable)
 	s.Recurse.TimeoutSec = getEnvIntValue(EnvSidecarRecurseTimeout, s.Recurse.TimeoutSec)
 	s.Logger.RotateOutputPath = getEnvStringValue(EnvSidecarLogRotateOutputPath, s.Logger.RotateOutputPath)

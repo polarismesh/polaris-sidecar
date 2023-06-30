@@ -27,6 +27,7 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
@@ -136,6 +137,10 @@ func (r *resolverMesh) Start(ctx context.Context) {
 	}()
 }
 
+func (r *resolverMesh) Debugger() []debughttp.DebugHandler {
+	return []debughttp.DebugHandler{}
+}
+
 func (r *resolverMesh) doReload(currentServices map[string]struct{}) (map[string]struct{}, bool) {
 	services, err := r.registry.GetCurrentNsService()
 	if err != nil {
@@ -143,7 +148,6 @@ func (r *resolverMesh) doReload(currentServices map[string]struct{}) (map[string
 		return nil, false
 	}
 	if ifServiceListChanged(currentServices, services) {
-		log.Infof("[Mesh] services lookup are %v", services)
 		r.localDNSServer.UpdateLookupTable(services, r.config.DNSAnswerIp)
 		return services, true
 	}

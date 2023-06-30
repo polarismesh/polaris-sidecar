@@ -6,7 +6,7 @@ English | [中文](./README-zh.md)
 
 Polaris-Sidecar as Polaris's local bike agent, providing two optional functional modes：
 
-- Local DNS: Use DNS parsing to access the services on the Arctic Star
+- Local DNS: Use DNS parsing to access the services on the polaris
 - Service Grid: Realize service discovery and governance by hijacking traffic, and develop invasiveness
 
 Users can select one of the modes to access Polaris-Sidecar. This document describes how to install and use Polaris-Sidecar in a virtual machine or container environment.
@@ -44,13 +44,12 @@ Users can select one of the modes to access Polaris-Sidecar. This document descr
 unzip polaris-sidecar-release_$version.$os.$arch.zip
 ```
 
-4. Modify polaris.yaml, write the address of the Arctic Star server, port number uses 8091 (GRPC port).
+4. Modify polaris-sidecar.yaml, write the address of the polaris server, port number uses 8091 (GRPC port).
 
 ```
-global:
-  serverConnector:
-    addresses:
-      - 127.0.0.1:8091
+polaris
+  addresses:
+    - 127.0.0.1:8091
 ```
 
 5. Enter the decompressed directory, perform tool/start.sh to start, then perform tool/p.sh to view the process whether it is successful.

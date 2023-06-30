@@ -30,6 +30,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 )
@@ -77,6 +78,10 @@ func (r *resolverDiscovery) Initialize(c *resolver.ConfigEntry) error {
 // Start the plugin runnable
 func (r *resolverDiscovery) Start(context.Context) {
 
+}
+
+func (r *resolverDiscovery) Debugger() []debughttp.DebugHandler {
+	return []debughttp.DebugHandler{}
 }
 
 // Destroy will destroy the resolver on shutdown

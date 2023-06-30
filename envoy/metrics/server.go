@@ -33,7 +33,7 @@ import (
 	"github.com/polarismesh/polaris-go"
 	"github.com/polarismesh/polaris-go/pkg/model"
 	"github.com/polarismesh/polaris-go/pkg/model/pb"
-	namingpb "github.com/polarismesh/polaris-go/pkg/model/pb/v1"
+	"github.com/polarismesh/specification/source/go/api/v1/service_manage"
 
 	"github.com/polarismesh/polaris-sidecar/pkg/client"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
@@ -241,7 +241,7 @@ func (s *Server) reportMetrics(metricKey InstanceMetricKey, subMetricValue *Inst
 func (s *Server) reportStatus(metricKey InstanceMetricKey, retStatus model.RetStatus, code int32, delay float64) {
 	callResult := &polaris.ServiceCallResult{}
 	callResult.SetRetStatus(retStatus)
-	namingInstance := &namingpb.Instance{}
+	namingInstance := &service_manage.Instance{}
 	namingInstance.Service = &wrappers.StringValue{Value: metricKey.ClusterName}
 	namingInstance.Namespace = &wrappers.StringValue{Value: s.namespace}
 	namingInstance.Host = &wrappers.StringValue{Value: metricKey.Host}

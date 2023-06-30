@@ -48,7 +48,6 @@ chmod +x ${bin_name}
 mkdir -p ${folder_name}
 cp ${bin_name} ${folder_name}
 cp polaris-sidecar.yaml ${folder_name}
-cp polaris.yaml ${folder_name}
 cp -r tool ${folder_name}/
 zip -r "${pkg_name}" ${folder_name}
 #md5sum ${pkg_name} > "${pkg_name}.md5sum"

@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
@@ -147,6 +148,14 @@ func (svr *Server) Run(ctx context.Context) <-chan error {
 		}(svr.dnsSvrs[i])
 	}
 	return errChan
+}
+
+func (svr *Server) Debugger() []debughttp.DebugHandler {
+	ret := make([]debughttp.DebugHandler, 0, 8)
+	for i := range svr.resolvers {
+		ret = append(ret, svr.resolvers[i].Debugger()...)
+	}
+	return ret
 }
 
 func (svr *Server) Destroy() error {

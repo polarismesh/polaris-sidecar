@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/miekg/dns"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 )
 
 const (
@@ -67,6 +68,8 @@ type NamingResolver interface {
 	Destroy()
 	// ServeDNS is like dns.Handler except ServeDNS may return an response or nil
 	ServeDNS(context.Context, dns.Question, string) *dns.Msg
+	// Debugger
+	Debugger() []debughttp.DebugHandler
 }
 
 var resolvers = map[string]NamingResolver{}

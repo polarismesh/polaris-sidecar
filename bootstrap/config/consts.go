@@ -20,11 +20,13 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 const (
+	EnvPolarisAddress                  = "POLARIS_ADDRESS"
 	EnvSidecarBind                     = "SIDECAR_BIND"
 	EnvSidecarPort                     = "SIDECAR_PORT"
 	EnvSidecarNamespace                = "SIDECAR_NAMESPACE"
@@ -46,6 +48,7 @@ const (
 	EnvSidecarMeshAnswerIp             = "SIDECAR_MESH_ANSWER_IP"
 	EnvSidecarMtlsEnable               = "SIDECAR_MTLS_ENABLE"
 	EnvSidecarMtlsCAServer             = "SIDECAR_MTLS_CA_SERVER"
+	EnvSidecarRLSEnable                = "SIDECAR_RLS_ENABLE"
 	EnvSidecarMetricEnable             = "SIDECAR_METRIC_ENABLE"
 	EnvSidecarMetricListenPort         = "SIDECAR_METRIC_LISTEN_PORT"
 )
@@ -56,6 +59,14 @@ func getEnvStringValue(envName string, defaultValue string) string {
 		return envValue
 	}
 	return defaultValue
+}
+
+func getEnvStringsValue(envName string, defaultValues []string) []string {
+	envValue := os.Getenv(envName)
+	if len(envValue) > 0 {
+		return strings.Split(envValue, ",")
+	}
+	return defaultValues
 }
 
 func getEnvIntValue(envName string, defaultValue int) int {

@@ -20,11 +20,18 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/polarismesh/polaris-sidecar/bootstrap/config"
 	"github.com/polarismesh/polaris-sidecar/envoy/metrics"
+	"github.com/polarismesh/polaris-sidecar/envoy/rls"
+	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/resolver"
 	mtlsAgent "github.com/polarismesh/polaris-sidecar/security/mtls/agent"
@@ -36,6 +43,9 @@ type Agent struct {
 	dnsSvrs      *resolver.Server
 	mtlsAgent    *mtlsAgent.Agent
 	metricServer *metrics.Server
+	rlsSvr       *rls.RateLimitServer
+
+	debugSvr *http.Server
 }
 
 // Start the main agent routines
@@ -89,22 +99,39 @@ func newAgent(configFile string, bootConfig *config.BootConfig) (*Agent, error) 
 	}
 	log.Infof("[agent] success to init log config")
 
-	if err := polarisAgent.runDns(configFile, bootConfig); err != nil {
+	client.InitSDKContext(&client.Config{
+		Addresses: polarisAgent.config.PolarisConfig.Adddresses,
+		Metrics: &client.Metrics{
+			Port:     polarisAgent.config.Port,
+			Type:     polarisAgent.config.Metrics.Type,
+			IP:       polarisAgent.config.Bind,
+			Interval: polarisAgent.config.Metrics.Interval,
+			Address:  polarisAgent.config.Metrics.Address,
+		},
+		LocationConfigImpl: polarisAgent.config.PolarisConfig.Location,
+	})
+
+	mux := http.NewServeMux()
+	polarisAgent.debugSvr = &http.Server{
+		Handler: mux,
+	}
+
+	if err := polarisAgent.buildDns(configFile, bootConfig); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.runSecurity(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildSecurity(configFile, bootConfig); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.runEnvoyMetrics(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildEnvoyMetrics(configFile, bootConfig); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.runEnvoyRls(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildEnvoyRls(configFile, bootConfig); err != nil {
 		return nil, err
 	}
 	return polarisAgent, nil
 }
 
-func (p *Agent) runSecurity(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildSecurity(configFile string, bootConfig *config.BootConfig) error {
 	if p.config.MTLS != nil && p.config.MTLS.Enable {
 		log.Info("create mtls agent")
 		agent, err := mtlsAgent.New(mtlsAgent.Option{
@@ -118,7 +145,7 @@ func (p *Agent) runSecurity(configFile string, bootConfig *config.BootConfig) er
 	return nil
 }
 
-func (p *Agent) runEnvoyMetrics(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildEnvoyMetrics(configFile string, bootConfig *config.BootConfig) error {
 	if p.config.Metrics.Enable {
 		log.Infof("create metric server")
 		p.metricServer = metrics.NewServer(p.config.Namespace, p.config.Metrics.Port)
@@ -126,11 +153,27 @@ func (p *Agent) runEnvoyMetrics(configFile string, bootConfig *config.BootConfig
 	return nil
 }
 
-func (p *Agent) runEnvoyRls(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildEnvoyRls(configFile string, bootConfig *config.BootConfig) error {
+	if p.config.RateLimit == nil || !p.config.RateLimit.Enable {
+		return nil
+	}
+	log.Infof("create ratelimit server")
+	conf := &rls.Config{
+		Network: strings.ToLower(p.config.RateLimit.Network),
+		TLSInfo: p.config.RateLimit.TLSInfo,
+	}
+	if conf.Network == "tcp" {
+		conf.Address = fmt.Sprintf("%s:%d", p.config.Bind, p.config.RateLimit.BindPort)
+	}
+	rlsSvr, err := rls.New(p.config.Namespace, conf)
+	if err != nil {
+		return err
+	}
+	p.rlsSvr = rlsSvr
 	return nil
 }
 
-func (p *Agent) runDns(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildDns(configFile string, bootConfig *config.BootConfig) error {
 	svr, err := resolver.NewServers(&resolver.ResolverConfig{
 		BindLocalhost: p.config.BindLocalhost(),
 		BindIP:        p.config.Bind,
@@ -142,13 +185,43 @@ func (p *Agent) runDns(configFile string, bootConfig *config.BootConfig) error {
 		return err
 	}
 	p.dnsSvrs = svr
+	p.registerDebugeHandler(svr.Debugger())
 	return nil
+}
+
+func (p *Agent) registerDebugeHandler(handlers []debughttp.DebugHandler) {
+	mux := p.debugSvr.Handler.(*http.ServeMux)
+	for i := range handlers {
+		handler := handlers[i]
+		mux.HandleFunc(handler.Path, handler.Handler)
+	}
 }
 
 // Start the agent
 func (p *Agent) Start(ctx context.Context) error {
 	var recvErrCounts int
 	errChan := make(chan error)
+
+	if p.config.Debugger.Enable {
+		go func() {
+			ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", p.config.Bind, p.config.Debugger.Port))
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			mux := p.debugSvr.Handler.(*http.ServeMux)
+			mux.HandleFunc("/debug/pprof/", pprof.Index)
+			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+			mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+			mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+			if err := p.debugSvr.Serve(ln); err != nil {
+				errChan <- err
+			}
+		}()
+	}
 	if p.dnsSvrs != nil {
 		go func() {
 			log.Info("start dns server")
@@ -173,6 +246,15 @@ func (p *Agent) Start(ctx context.Context) error {
 		go func() {
 			log.Info("start metric server")
 			err := p.metricServer.Start(ctx)
+			if nil != err {
+				errChan <- err
+			}
+		}()
+	}
+	if p.rlsSvr != nil {
+		go func() {
+			log.Info("start ratelimit server")
+			err := p.rlsSvr.Run(ctx)
 			if nil != err {
 				errChan <- err
 			}

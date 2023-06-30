@@ -19,12 +19,13 @@ package client
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 
 	"github.com/polarismesh/polaris-go"
 	"github.com/polarismesh/polaris-go/api"
 	"github.com/polarismesh/polaris-go/pkg/config"
-	"github.com/polarismesh/polaris-go/plugin/statreporter/prometheus"
+	"github.com/polarismesh/polaris-go/plugin/metrics/prometheus"
 )
 
 var (
@@ -44,8 +45,15 @@ func InitSDKContext(conf *Config) error {
 		sdkCfg.Global.StatReporter.SetEnable(true)
 		sdkCfg.Global.StatReporter.SetChain([]string{"prometheus"})
 		sdkCfg.Global.StatReporter.SetPluginConfig("prometheus", &prometheus.Config{
-			
+			Type:     conf.Metrics.Type,
+			IP:       conf.Metrics.IP,
+			PortStr:  strconv.FormatInt(int64(conf.Metrics.Port), 10),
+			Interval: conf.Metrics.Interval,
+			Address:  conf.Metrics.Address,
 		})
+	}
+	if conf.LocationConfigImpl != nil {
+		sdkCfg.Global.Location = conf.LocationConfigImpl
 	}
 	sdkCtx, err := polaris.NewSDKContextByConfig(sdkCfg)
 	if err != nil {

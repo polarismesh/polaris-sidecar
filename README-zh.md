@@ -44,13 +44,12 @@ polaris-sidecar 作为 polaris 的本地边车代理，提供两个可选功能�
 unzip polaris-sidecar-release_$version.$os.$arch.zip
 ```
 
-4. 修改polaris.yaml，写入北极星服务端的地址，端口号使用8091（GRPC端口）。
+4. 修改polaris-sidecar.yaml，写入北极星服务端的地址，端口号使用8091（GRPC端口）。
 
 ```
-global:
-  serverConnector:
-    addresses:
-      - 127.0.0.1:8091
+polaris
+  addresses:
+    - 127.0.0.1:8091
 ```
 
 5. 进入解压后的目录，执行tool/start.sh进行启动，然后执行tool/p.sh查看进程是否启动成功。

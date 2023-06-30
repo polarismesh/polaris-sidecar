@@ -26,8 +26,6 @@ type MetricConfig struct {
 	Port int `yaml:"port"`
 	// Type metrics data report type pull/push
 	Type string `yaml:"type"`
-	// IP if use pull, need open Prometheus HttpServer
-	IP string `yaml:"-"`
 	// Interval if use push, need set report interval metrics data to pushgateway
 	Interval time.Duration `yaml:"interval"`
 	// Address if use push, need set report metrics data to pushgateway server
