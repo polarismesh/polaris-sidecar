@@ -15,9 +15,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package http
 
-type MTLSConfiguration struct {
-	Enable   bool   `yaml:"enable"`
-	CAServer string `yaml:"ca_server"`
+import "net/http"
+
+type DebugHandler struct {
+	Path    string
+	Handler http.HandlerFunc
 }

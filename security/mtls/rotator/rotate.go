@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 type Rotator struct {

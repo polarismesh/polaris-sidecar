@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/miekg/dns"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
 )
 
 const (
@@ -29,6 +30,21 @@ const (
 	// PluginNameMeshProxy mesh-proxy plugin identity
 	PluginNameMeshProxy = "meshproxy"
 )
+
+type ResolverConfig struct {
+	BindLocalhost bool
+	BindIP        string
+	BindPort      uint32
+	Recurse       *RecurseConfig
+	Resolvers     []*ConfigEntry
+}
+
+// RecurseConfig recursor name resolve config
+type RecurseConfig struct {
+	Enable      bool     `yaml:"enable"`
+	TimeoutSec  int      `yaml:"timeoutSec"`
+	NameServers []string `yaml:"name_servers"`
+}
 
 // ConfigEntry: resolver plugin config entry
 type ConfigEntry struct {
@@ -52,6 +68,8 @@ type NamingResolver interface {
 	Destroy()
 	// ServeDNS is like dns.Handler except ServeDNS may return an response or nil
 	ServeDNS(context.Context, dns.Question, string) *dns.Msg
+	// Debugger
+	Debugger() []debughttp.DebugHandler
 }
 
 var resolvers = map[string]NamingResolver{}

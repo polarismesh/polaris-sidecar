@@ -86,6 +86,16 @@ func (m *MockConsumerAPI) InitCalleeService(req *polaris.InitCalleeServiceReques
 	return nil
 }
 
+// WatchAllInstances 监听服务实例变更事件
+func (m *MockConsumerAPI) WatchAllInstances(req *polaris.WatchAllInstancesRequest) (*model.WatchAllInstancesResponse, error) {
+	return nil, nil
+}
+
+// WatchAllServices 监听服务列表变更事件
+func (m *MockConsumerAPI) WatchAllServices(req *polaris.WatchAllServicesRequest) (*model.WatchAllServicesResponse, error) {
+	return nil, nil
+}
+
 // Destroy 销毁API，销毁后无法再进行调用
 func (m *MockConsumerAPI) Destroy() {
 }

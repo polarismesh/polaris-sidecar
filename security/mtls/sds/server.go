@@ -7,14 +7,14 @@ import (
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	secretv3 "github.com/envoyproxy/go-control-plane/envoy/service/secret/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	cache "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate"
-
-	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	serverv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"google.golang.org/grpc"
+
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
+	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate"
 )
 
 type Server struct {

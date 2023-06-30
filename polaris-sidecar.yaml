@@ -1,11 +1,3 @@
-bind: 0.0.0.0
-port: 53
-namespace: default
-recurse:
-  enable: false
-  timeoutSec: 1
-mtls:
-  enable: false
 logger:
   output_paths:
     - stdout
@@ -17,6 +9,37 @@ logger:
   rotation_max_backups: 10
   rotation_max_age: 7
   output_level: info
+debugger:
+  enable: false
+  port: 30000
+polaris:
+  addresses: 
+    - ${POLARIS_ADDRESS}
+  # 地址提供插件，用于获取当前SDK所在的地域信息
+  location:
+    providers:
+      - type: local
+        region: ${REGION}
+        zone: ${ZONE}
+        campus: ${CAMPUS}
+      # - type: remoteHttp
+      #   region: http://127.0.0.1/region
+      #   zone: http://127.0.0.1/zone
+      #   campus: http://127.0.0.1/campus
+bind: 0.0.0.0
+port: 53
+namespace: default
+recurse:
+  enable: false
+  timeoutSec: 1
+mtls:
+  enable: false
+metrics:
+  enable: true
+  type: pull
+  metricPort: 0
+ratelimit:
+  network: unix
 resolvers:
   - name: dnsagent
     dns_ttl: 10

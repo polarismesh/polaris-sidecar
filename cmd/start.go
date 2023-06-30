@@ -22,12 +22,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/polarismesh/polaris-sidecar/bootstrap"
+	"github.com/polarismesh/polaris-sidecar/bootstrap/config"
 )
 
 var (
 	configFilePath = ""
 
-	bootConfig bootstrap.BootConfig
+	bootConfig config.BootConfig
 
 	startCmd = &cobra.Command{
 		Use:   "start",

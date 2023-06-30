@@ -4,12 +4,13 @@ import (
 	"context"
 	"net"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"google.golang.org/grpc"
+
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate/caclient"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/certificate/manager"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/rotator"
 	"github.com/polarismesh/polaris-sidecar/security/mtls/sds"
-	"google.golang.org/grpc"
 )
 
 type Agent struct {

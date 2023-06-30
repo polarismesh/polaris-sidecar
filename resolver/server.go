@@ -15,30 +15,182 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package bootstrap
+package resolver
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/miekg/dns"
-
-	"github.com/polarismesh/polaris-sidecar/log"
-	"github.com/polarismesh/polaris-sidecar/resolver"
+	debughttp "github.com/polarismesh/polaris-sidecar/pkg/http"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
-type dnsHandler struct {
+const (
+	etcResolvConfPath = "/etc/resolv.conf"
+)
+
+func IsFile(path string) bool {
+	s, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return !s.IsDir()
+}
+
+func parseResolvConf(bindLocalhost bool) ([]string, []string) {
+	if !IsFile(etcResolvConfPath) {
+		return nil, nil
+	}
+	dnsConfig, err := dns.ClientConfigFromFile(etcResolvConfPath)
+	if err != nil {
+		log.Errorf("[agent] failed to load /etc/resolv.conf: %v", err)
+		return nil, nil
+	}
+	var searchNames []string
+	var nameservers []string
+	if dnsConfig != nil {
+		for _, search := range dnsConfig.Search {
+			searchNames = append(searchNames, search+".")
+		}
+
+		for _, server := range dnsConfig.Servers {
+			if server == "127.0.0.1" && bindLocalhost {
+				continue
+			}
+			nameservers = append(nameservers, server)
+		}
+	}
+	return nameservers, searchNames
+}
+
+func NewServers(conf *ResolverConfig) (*Server, error) {
+	resolvers := make([]NamingResolver, 0, len(conf.Resolvers))
+	for _, resolverCfg := range conf.Resolvers {
+		if !resolverCfg.Enable {
+			log.Infof("[agent] resolver %s is not enabled", resolverCfg.Name)
+			continue
+		}
+		name := resolverCfg.Name
+		handler := NameResolver(name)
+		if nil == handler {
+			log.Errorf("[agent] resolver %s is not found", resolverCfg.Name)
+			return nil, fmt.Errorf("fail to lookup resolver %s, consider it's not registered", name)
+		}
+		if err := handler.Initialize(resolverCfg); nil != err {
+			for _, initHandler := range resolvers {
+				initHandler.Destroy()
+			}
+			log.Errorf("[agent] fail to init resolver %s, err: %v", resolverCfg.Name, err)
+			return nil, err
+		}
+		log.Infof("[agent] finished to init resolver %s", resolverCfg.Name)
+		resolvers = append(resolvers, handler)
+	}
+
+	nameservers, searchNames := parseResolvConf(conf.BindLocalhost)
+	log.Infof("[agent] finished to parse /etc/resolv.conf, nameservers %s, search %s", nameservers, searchNames)
+	if len(conf.Recurse.NameServers) == 0 {
+		conf.Recurse.NameServers = nameservers
+	}
+	recurseAddresses := make([]string, 0, len(conf.Recurse.NameServers))
+	for _, nameserver := range conf.Recurse.NameServers {
+		recurseAddresses = append(recurseAddresses, fmt.Sprintf("%s:53", nameserver))
+	}
+	udpServer := &dns.Server{
+		Addr: conf.BindIP + ":" + strconv.Itoa(int(conf.BindPort)), Net: "udp",
+		Handler: buildDNSServer(
+			"udp",
+			resolvers,
+			searchNames,
+			time.Duration(conf.Recurse.TimeoutSec)*time.Second,
+			recurseAddresses,
+			conf.Recurse.Enable,
+		),
+	}
+	tcpServer := &dns.Server{
+		Addr: conf.BindIP + ":" + strconv.Itoa(int(conf.BindPort)), Net: "tcp",
+		Handler: buildDNSServer(
+			"tcp",
+			resolvers,
+			searchNames,
+			time.Duration(conf.Recurse.TimeoutSec)*time.Second,
+			recurseAddresses,
+			conf.Recurse.Enable,
+		),
+	}
+
+	return &Server{
+		dnsSvrs:   []*dns.Server{tcpServer, udpServer},
+		resolvers: resolvers,
+	}, nil
+}
+
+type Server struct {
+	dnsSvrs   []*dns.Server
+	resolvers []NamingResolver
+}
+
+func (svr *Server) Run(ctx context.Context) <-chan error {
+	for _, handler := range svr.resolvers {
+		handler.Start(ctx)
+		log.Infof("[agent] success to start resolver %s", handler.Name())
+	}
+	errChan := make(chan error)
+	for i := range svr.dnsSvrs {
+		go func(dnsSvr *dns.Server) {
+			errChan <- dnsSvr.ListenAndServe()
+		}(svr.dnsSvrs[i])
+	}
+	return errChan
+}
+
+func (svr *Server) Debugger() []debughttp.DebugHandler {
+	ret := make([]debughttp.DebugHandler, 0, 8)
+	for i := range svr.resolvers {
+		ret = append(ret, svr.resolvers[i].Debugger()...)
+	}
+	return ret
+}
+
+func (svr *Server) Destroy() error {
+	for _, handler := range svr.resolvers {
+		handler.Destroy()
+	}
+	return nil
+}
+
+func buildDNSServer(protocol string,
+	resolvers []NamingResolver,
+	searchNames []string,
+	recursorTimeout time.Duration,
+	recursors []string,
+	recurseEnable bool) *dnsServer {
+	return &dnsServer{
+		protocol:        protocol,
+		resolvers:       resolvers,
+		searchNames:     searchNames,
+		recursorTimeout: recursorTimeout,
+		recursors:       recursors,
+		recurseEnable:   recurseEnable,
+	}
+}
+
+type dnsServer struct {
 	protocol        string
-	resolvers       []resolver.NamingResolver
+	resolvers       []NamingResolver
 	searchNames     []string
 	recursorTimeout time.Duration
 	recursors       []string
 	recurseEnable   bool
 }
 
-func (d *dnsHandler) preprocess(qname string) string {
+func (d *dnsServer) Preprocess(qname string) string {
 	if len(d.searchNames) == 0 {
 		return qname
 	}
@@ -62,7 +214,7 @@ func (d *dnsHandler) preprocess(qname string) string {
 	return qname
 }
 
-func (d *dnsHandler) sendDnsCode(w dns.ResponseWriter, r *dns.Msg, code int) {
+func (d *dnsServer) sendDnsCode(w dns.ResponseWriter, r *dns.Msg, code int) {
 	msg := &dns.Msg{}
 	msg.SetReply(r)
 	msg.RecursionDesired = true
@@ -78,7 +230,7 @@ func (d *dnsHandler) sendDnsCode(w dns.ResponseWriter, r *dns.Msg, code int) {
 	}
 }
 
-func (d *dnsHandler) sendDnsResponse(w dns.ResponseWriter, r *dns.Msg, msg *dns.Msg) {
+func (d *dnsServer) sendDnsResponse(w dns.ResponseWriter, r *dns.Msg, msg *dns.Msg) {
 	msg.SetReply(r)
 	msg.Truncate(size(d.protocol, r))
 	if edns := r.IsEdns0(); edns != nil {
@@ -91,16 +243,16 @@ func (d *dnsHandler) sendDnsResponse(w dns.ResponseWriter, r *dns.Msg, msg *dns.
 }
 
 // ServeDNS handler callback
-func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
+func (d *dnsServer) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// questions length is 0, send refused
 	if len(req.Question) == 0 {
 		d.sendDnsCode(w, req, dns.RcodeRefused)
 	}
 	// questions type we only accept
 	question := req.Question[0]
-	qname := d.preprocess(question.Name)
-	log.Infof("[agent] input question name %s, after preprocess name %s", question.Name, qname)
-	ctx := context.WithValue(context.Background(), resolver.ContextProtocol, d.protocol)
+	qname := d.Preprocess(question.Name)
+	log.Infof("[agent] input question name %s, after Preprocess name %s", question.Name, qname)
+	ctx := context.WithValue(context.Background(), ContextProtocol, d.protocol)
 	var resp *dns.Msg
 	for _, handler := range d.resolvers {
 		resp = handler.ServeDNS(ctx, question, qname)
@@ -114,7 +266,7 @@ func (d *dnsHandler) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 }
 
 // handleRecurse is used to handle recursive DNS queries
-func (d *dnsHandler) handleRecurse(resp dns.ResponseWriter, req *dns.Msg) {
+func (d *dnsServer) handleRecurse(resp dns.ResponseWriter, req *dns.Msg) {
 	q := req.Question[0]
 	network := "udp"
 	defer func(s time.Time) {
@@ -144,7 +296,7 @@ func (d *dnsHandler) handleRecurse(resp dns.ResponseWriter, req *dns.Msg) {
 				continue
 			} else if err == nil || (r != nil && r.Truncated) {
 				// Forward the response
-				log.Infof("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s",
+				log.Debugf("[agent] recurse succeeded for question, question: %s, rtt: %s, recursor: %s",
 					q.String(), rtt, recursor)
 				if err := resp.WriteMsg(r); err != nil {
 					log.Warnf("failed to respond, error: %v", err)

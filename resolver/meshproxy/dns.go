@@ -25,7 +25,7 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/polarismesh/polaris-sidecar/log"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
 )
 
 type LocalDNSServer struct {
@@ -49,7 +49,7 @@ func (h *LocalDNSServer) UpdateLookupTable(polarisServices map[string]struct{}, 
 		lookupTable.buildDNSAnswers(altHosts, []net.IP{net.ParseIP(dnsResponseIp)}, nil)
 	}
 	h.lookupTable.Store(lookupTable)
-	log.Infof("[mesh] updated lookup table with %d hosts, allHosts are %v",
+	log.Debugf("[mesh] updated lookup table with %d hosts, allHosts are %v",
 		len(lookupTable.allHosts), lookupTable.allHosts)
 }
 
