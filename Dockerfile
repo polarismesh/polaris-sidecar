@@ -19,7 +19,6 @@ WORKDIR /data
 RUN chmod -R a+rw /data
 
 COPY polaris-sidecar /data/polaris-sidecar
-COPY polaris.yaml /data/polaris.yaml
 
 RUN chmod +x /data/polaris-sidecar
 
