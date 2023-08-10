@@ -214,6 +214,12 @@ func (p *Agent) Start(ctx context.Context) error {
 			}
 
 			mux := p.debugSvr.Handler.(*http.ServeMux)
+			mux.HandleFunc("/sidecar/health/readiness", func(resp http.ResponseWriter, _ *http.Request) {
+				resp.WriteHeader(http.StatusOK)
+			})
+			mux.HandleFunc("/sidecar/health/liveness", func(resp http.ResponseWriter, _ *http.Request) {
+				resp.WriteHeader(http.StatusOK)
+			})
 			mux.HandleFunc("/debug/pprof/", pprof.Index)
 			mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 			mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
