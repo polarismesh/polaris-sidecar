@@ -148,12 +148,16 @@ func defaultSidecarConfig() *SidecarConfig {
 		},
 		RateLimit: &rls.Config{
 			Enable:  false,
-			Network: "uinx",
+			Network: "unix",
 			Address: rls.DefaultRLSAddress,
 		},
 		Metrics: &metrics.MetricConfig{
 			Enable: false,
 			Port:   15985,
+		},
+		Debugger: &DebugConfig{
+			Enable: true,
+			Port:   50000,
 		},
 	}
 }

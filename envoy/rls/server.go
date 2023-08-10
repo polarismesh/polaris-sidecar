@@ -27,6 +27,8 @@ import (
 	"github.com/polarismesh/polaris-go"
 	"github.com/polarismesh/polaris-go/pkg/model"
 	"github.com/polarismesh/polaris-sidecar/pkg/client"
+	"github.com/polarismesh/polaris-sidecar/pkg/log"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -88,6 +90,7 @@ func (svr *RateLimitServer) Destroy() {
 const MaxUint32 = uint32(1<<32 - 1)
 
 func (svr *RateLimitServer) ShouldRateLimit(ctx context.Context, req *pb.RateLimitRequest) (*pb.RateLimitResponse, error) {
+	log.Info("[envoy-rls] receive ratelimit request", zap.Any("req", req))
 	acquireQuota := req.GetHitsAddend()
 	if acquireQuota == 0 {
 		acquireQuota = 1
@@ -95,10 +98,12 @@ func (svr *RateLimitServer) ShouldRateLimit(ctx context.Context, req *pb.RateLim
 
 	quotaReq, err := svr.buildQuotaRequest(req.GetDomain(), acquireQuota, req.GetDescriptors())
 	if err != nil {
+		log.Error("[envoy-rls] build ratelimit quota request", zap.Error(err))
 		return nil, err
 	}
 	future, err := svr.limiter.GetQuota(quotaReq)
 	if err != nil {
+		log.Error("[envoy-rls] get quota", zap.Error(err))
 		return nil, err
 	}
 	resp := future.Get()
@@ -115,11 +120,13 @@ func (svr *RateLimitServer) ShouldRateLimit(ctx context.Context, req *pb.RateLim
 		})
 	}
 
-	return &pb.RateLimitResponse{
+	rlsRsp := &pb.RateLimitResponse{
 		OverallCode: overallCode,
 		Statuses:    descriptorStatus,
 		RawBody:     []byte(resp.Info),
-	}, nil
+	}
+	log.Info("[envoy-rls] send envoy rls response", zap.Any("rsp", rlsRsp))
+	return rlsRsp, nil
 }
 
 func (svr *RateLimitServer) buildQuotaRequest(domain string, acquireQuota uint32,
