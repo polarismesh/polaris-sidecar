@@ -49,7 +49,7 @@ func (h *LocalDNSServer) UpdateLookupTable(polarisServices map[string]struct{}, 
 		lookupTable.buildDNSAnswers(altHosts, []net.IP{net.ParseIP(dnsResponseIp)}, nil)
 	}
 	h.lookupTable.Store(lookupTable)
-	log.Debugf("[mesh] updated lookup table with %d hosts, allHosts are %v",
+	log.Infof("[mesh] updated lookup table with %d hosts, allHosts are %v",
 		len(lookupTable.allHosts), lookupTable.allHosts)
 }
 

@@ -140,6 +140,7 @@ func defaultSidecarConfig() *SidecarConfig {
 				Name:   resolver.PluginNameMeshProxy,
 				DnsTtl: 120,
 				Enable: false,
+				Suffix: defaultSvcSuffix,
 				Option: map[string]interface{}{
 					"reload_interval_sec": 30,
 					"dns_answer_ip":       "10.4.4.4",

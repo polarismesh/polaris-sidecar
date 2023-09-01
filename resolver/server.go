@@ -103,7 +103,7 @@ func NewServers(conf *ResolverConfig) (*Server, error) {
 		recurseAddresses = append(recurseAddresses, fmt.Sprintf("%s:53", nameserver))
 	}
 	udpServer := &dns.Server{
-		Addr: conf.BindIP + ":" + strconv.Itoa(int(conf.BindPort)), Net: "udp",
+		Addr: conf.BindIP + ":" + strconv.FormatUint(uint64(conf.BindPort), 10), Net: "udp",
 		Handler: buildDNSServer(
 			"udp",
 			resolvers,
@@ -114,7 +114,7 @@ func NewServers(conf *ResolverConfig) (*Server, error) {
 		),
 	}
 	tcpServer := &dns.Server{
-		Addr: conf.BindIP + ":" + strconv.Itoa(int(conf.BindPort)), Net: "tcp",
+		Addr: conf.BindIP + ":" + strconv.FormatUint(uint64(conf.BindPort), 10), Net: "tcp",
 		Handler: buildDNSServer(
 			"tcp",
 			resolvers,
@@ -126,7 +126,7 @@ func NewServers(conf *ResolverConfig) (*Server, error) {
 	}
 
 	return &Server{
-		dnsSvrs:   []*dns.Server{tcpServer, udpServer},
+		dnsSvrs:   []*dns.Server{udpServer, tcpServer},
 		resolvers: resolvers,
 	}, nil
 }
@@ -144,6 +144,7 @@ func (svr *Server) Run(ctx context.Context) <-chan error {
 	errChan := make(chan error)
 	for i := range svr.dnsSvrs {
 		go func(dnsSvr *dns.Server) {
+			log.Infof("[agent] success to start dns server %s %s", dnsSvr.Addr, dnsSvr.Net)
 			errChan <- dnsSvr.ListenAndServe()
 		}(svr.dnsSvrs[i])
 	}

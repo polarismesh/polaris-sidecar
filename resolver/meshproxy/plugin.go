@@ -90,7 +90,7 @@ func (r *resolverMesh) Destroy() {
 func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qname string) *dns.Msg {
 	_, matched := resolver.MatchSuffix(qname, r.suffix)
 	if !matched {
-		log.Debugf("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
+		log.Infof("[Mesh] suffix not matched for name %s, suffix %s", qname, r.suffix)
 		return nil
 	}
 	ret := r.localDNSServer.ServeDNS(ctx, &question, qname)
@@ -104,7 +104,7 @@ func (r *resolverMesh) ServeDNS(ctx context.Context, question dns.Question, qnam
 	qname = qname + "." + r.config.Namespace + "."
 	ret = r.localDNSServer.ServeDNS(ctx, &question, qname)
 	if ret == nil {
-		log.Debugf("[Mesh] host not found for name %s", qname)
+		log.Infof("[Mesh] host not found for name %s", qname)
 	}
 	return ret
 }
