@@ -23,7 +23,7 @@ pkg_name="${folder_name}.zip"
 if [ "${GOOS}" == "windows" ]; then
   bin_name="polaris-sidecar.exe"
 fi
-echo "GOOS is ${GOOS}, binary name is ${bin_name}"
+echo "GOOS is ${GOOS}, GOARCH is ${GOARCH}, binary name is ${bin_name}"
 
 cd $workdir
 
@@ -39,7 +39,7 @@ export CGO_ENABLED=0
 
 build_date=$(date "+%Y%m%d.%H%M%S")
 package="github.com/polarismesh/polaris-sidecar/version"
-go build -o ${bin_name} -ldflags="-X ${package}.Version=${version} -X ${package}.BuildDate=${build_date}"
+GOARCH=${GOARCH} GOOS=${GOOS} go build -o ${bin_name} -ldflags="-X ${package}.Version=${version} -X ${package}.BuildDate=${build_date}"
 
 # 设置程序为可执行
 chmod +x ${bin_name}

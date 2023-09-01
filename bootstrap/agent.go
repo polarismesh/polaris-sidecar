@@ -92,17 +92,17 @@ func newAgent(configFile string, bootConfig *config.BootConfig) (*Agent, error) 
 		log.Errorf("[agent] fail to parse sidecar config, err: %v", err)
 		return nil, err
 	}
-	log.Infof("[agent] finished to parse sidecar config, current active config is %s", *polarisAgent.config)
 	// 初始化日志打印
 	if err := log.Configure(polarisAgent.config.Logger); err != nil {
 		return nil, err
 	}
 	log.Infof("[agent] success to init log config")
+	log.Infof("[agent] finished to parse sidecar config, current active config is \n%s", *polarisAgent.config)
 
 	client.InitSDKContext(&client.Config{
 		Addresses: polarisAgent.config.PolarisConfig.Adddresses,
 		Metrics: &client.Metrics{
-			Port:     polarisAgent.config.Port,
+			Port:     polarisAgent.config.Metrics.Port,
 			Type:     polarisAgent.config.Metrics.Type,
 			IP:       polarisAgent.config.Bind,
 			Interval: polarisAgent.config.Metrics.Interval,
@@ -116,22 +116,22 @@ func newAgent(configFile string, bootConfig *config.BootConfig) (*Agent, error) 
 		Handler: mux,
 	}
 
-	if err := polarisAgent.buildDns(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildDns(configFile); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.buildSecurity(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildSecurity(configFile); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.buildEnvoyMetrics(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildEnvoyMetrics(configFile); err != nil {
 		return nil, err
 	}
-	if err := polarisAgent.buildEnvoyRls(configFile, bootConfig); err != nil {
+	if err := polarisAgent.buildEnvoyRls(configFile); err != nil {
 		return nil, err
 	}
 	return polarisAgent, nil
 }
 
-func (p *Agent) buildSecurity(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildSecurity(configFile string) error {
 	if p.config.MTLS != nil && p.config.MTLS.Enable {
 		log.Info("create mtls agent")
 		agent, err := mtlsAgent.New(mtlsAgent.Option{
@@ -145,7 +145,7 @@ func (p *Agent) buildSecurity(configFile string, bootConfig *config.BootConfig) 
 	return nil
 }
 
-func (p *Agent) buildEnvoyMetrics(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildEnvoyMetrics(configFile string) error {
 	if p.config.Metrics.Enable {
 		log.Infof("create metric server")
 		p.metricServer = metrics.NewServer(p.config.Namespace, p.config.Metrics.Port)
@@ -153,7 +153,7 @@ func (p *Agent) buildEnvoyMetrics(configFile string, bootConfig *config.BootConf
 	return nil
 }
 
-func (p *Agent) buildEnvoyRls(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildEnvoyRls(configFile string) error {
 	if p.config.RateLimit == nil || !p.config.RateLimit.Enable {
 		return nil
 	}
@@ -173,11 +173,11 @@ func (p *Agent) buildEnvoyRls(configFile string, bootConfig *config.BootConfig) 
 	return nil
 }
 
-func (p *Agent) buildDns(configFile string, bootConfig *config.BootConfig) error {
+func (p *Agent) buildDns(configFile string) error {
 	svr, err := resolver.NewServers(&resolver.ResolverConfig{
 		BindLocalhost: p.config.BindLocalhost(),
 		BindIP:        p.config.Bind,
-		BindPort:      uint32(bootConfig.Port),
+		BindPort:      uint32(p.config.Port),
 		Recurse:       p.config.Recurse,
 		Resolvers:     p.config.Resolvers,
 	})
