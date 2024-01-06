@@ -69,7 +69,7 @@ func EnvDefaultInt(name string, val int, def int) int {
 	return def
 }
 
-const DefaultSDSAddress = "/var/run/polaris/mtls/sds.sock"
+const DefaultSDSAddress = "/tmp/polaris-sidecar/mtls/sds.sock"
 
 // init options with enviroment variables
 func (opt *Option) init() error {
