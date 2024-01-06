@@ -231,7 +231,7 @@ func (s *SidecarConfig) mergeEnv() {
 	s.PolarisConfig.Adddresses = getEnvStringsValue(EnvPolarisAddress, s.PolarisConfig.Adddresses)
 	s.MTLS.Enable = getEnvBoolValue(EnvSidecarMtlsEnable, s.MTLS.Enable)
 	s.MTLS.CAServer = getEnvStringValue(EnvSidecarMtlsCAServer, s.MTLS.CAServer)
-	s.RateLimit.Enable = getEnvBoolValue(EnvSidecarRLSEnable, s.MTLS.Enable)
+	s.RateLimit.Enable = getEnvBoolValue(EnvSidecarRLSEnable, s.RateLimit.Enable)
 	s.Recurse.Enable = getEnvBoolValue(EnvSidecarRecurseEnable, s.Recurse.Enable)
 	s.Recurse.TimeoutSec = getEnvIntValue(EnvSidecarRecurseTimeout, s.Recurse.TimeoutSec)
 	s.Logger.RotateOutputPath = getEnvStringValue(EnvSidecarLogRotateOutputPath, s.Logger.RotateOutputPath)

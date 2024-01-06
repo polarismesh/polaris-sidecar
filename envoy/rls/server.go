@@ -20,6 +20,8 @@ package rls
 import (
 	"context"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 
 	v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/common/ratelimit/v3"
@@ -34,6 +36,7 @@ import (
 )
 
 func New(namespace string, conf *Config) (*RateLimitServer, error) {
+	conf.init()
 	return &RateLimitServer{
 		namespace: namespace,
 		conf:      conf,
@@ -49,6 +52,11 @@ type RateLimitServer struct {
 }
 
 func (svr *RateLimitServer) Run(ctx context.Context) error {
+	if svr.conf.Network == "unix" {
+		if err := os.MkdirAll(filepath.Dir(svr.conf.Address), os.ModePerm); err != nil {
+			return err
+		}
+	}
 	ln, err := net.Listen(svr.conf.Network, svr.conf.Address)
 	if err != nil {
 		return err
@@ -150,6 +158,6 @@ func (svr *RateLimitServer) buildQuotaRequest(domain string, acquireQuota uint32
 	req.SetNamespace(svr.namespace)
 	req.SetService(domain)
 	req.SetToken(acquireQuota)
-
+	log.Info("[envoy-rls] build polaris quota request", zap.Any("param", req))
 	return req, nil
 }

@@ -19,13 +19,19 @@ package rls
 
 type Config struct {
 	Enable   bool     `yaml:"enable"`
-	Network  string   `yaml:"-"`
-	Address  string   `yaml"-"`
+	Network  string   `yaml:"network"`
+	Address  string   `yaml:"address"`
 	BindPort uint32   `yaml:"port"`
 	TLSInfo  *TLSInfo `yaml:"tls_info"`
 }
 
-const DefaultRLSAddress = "/var/run/polaris/ratelimit/rls.sock"
+func (c *Config) init() {
+	if c.Network == "unix" && c.Address == "" {
+		c.Address = DefaultRLSAddress
+	}
+}
+
+const DefaultRLSAddress = "/tmp/polaris-sidecar/ratelimit/rls.sock"
 
 // TLSInfo tls 配置信息
 type TLSInfo struct {

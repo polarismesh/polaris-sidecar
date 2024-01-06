@@ -3,6 +3,8 @@ package agent
 import (
 	"context"
 	"net"
+	"os"
+	"path/filepath"
 
 	"google.golang.org/grpc"
 
@@ -34,6 +36,12 @@ func New(opt Option) (*Agent, error) {
 	a.addr = opt.Address
 	a.rotator = rotator.New(opt.RotatePeriod, opt.FailedRetryDelay)
 	a.sds = sds.New(opt.CryptombPollDelay)
+
+	if opt.Network == "unix" {
+		if err := os.MkdirAll(filepath.Dir(opt.Address), os.ModePerm); err != nil {
+			return nil, err
+		}
+	}
 
 	cli, err := caclient.NewWithRootCA(opt.CAServer, caclient.ServiceAccountToken(), defaultCAPath)
 	if err != nil {

@@ -39,6 +39,7 @@ metrics:
   type: pull
   metricPort: 0
 ratelimit:
+  enable: true
   network: unix
 resolvers:
   - name: dnsagent
