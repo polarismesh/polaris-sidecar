@@ -1,3 +1,5 @@
+//go:build arm64
+
 package sds
 
 import (
@@ -7,7 +9,6 @@ import (
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	envoytls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
-	"github.com/intel-go/cpuid"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -20,13 +21,7 @@ import (
 // See references:
 // 1. https://github.com/intel/ipp-crypto/blob/46944bd18e6dbad491ef9b9a3404303ef7680c09/sources/ippcp/crypto_mb/src/common/cpu_features.c#L227
 // 2. https://github.com/intel-go/cpuid/
-var cryptombSupported = cpuid.EnabledAVX512 &&
-	cpuid.HasExtendedFeature(cpuid.BMI2) &&
-	cpuid.HasExtendedFeature(cpuid.AVX512F) &&
-	cpuid.HasExtendedFeature(cpuid.AVX512DQ) &&
-	cpuid.HasExtendedFeature(cpuid.AVX512BW) &&
-	cpuid.HasExtendedFeature(cpuid.AVX512IFMA) &&
-	cpuid.HasExtendedFeature(cpuid.AVX512VBMI2)
+var cryptombSupported = false
 
 // makeSecrets make all secrets which should be pushed to envoy.
 // For now, just ROOTCA & default.

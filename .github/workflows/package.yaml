@@ -38,7 +38,7 @@ jobs:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           echo "version is $VERSION"
-          bash build_auto.sh $VERSION
+          bash build_vm.sh $VERSION
           PACKAGE_NAME=$(ls | grep polaris-sidecar-local*.zip | sed -n '1p')
           echo ::set-output name=name::${PACKAGE_NAME}
 
