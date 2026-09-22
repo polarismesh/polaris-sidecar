@@ -1,15 +1,17 @@
-FROM alpine:latest
+FROM alpine:3.24.2
 
 RUN sed -i 's!http://dl-cdn.alpinelinux.org/!https://mirrors.tencent.com/!g' /etc/apk/repositories
 
 RUN set -eux && \
-    apk add bind-tools && \
-    apk add busybox-extras && \
-    apk add findutils && \
-    apk add tcpdump && \
-    apk add tzdata && \
-    apk add curl && \
-    apk add bash && \
+    apk upgrade --no-cache && \
+    apk add --no-cache \
+        bash \
+        bind-tools \
+        busybox-extras \
+        curl \
+        findutils \
+        tcpdump \
+        tzdata && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
     date
